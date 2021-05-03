@@ -1,24 +1,30 @@
 import traceback
-from ticketService import app
-from ticketService import db
-from ticketService.tickets_models import Concert, Tickets, Sold
-from ticketService.sold_tickets_db import create_sold_tickets
+from ticketsService import app
+from ticketsService import db
+from ticketsService.tickets_models import Concert, Tickets, Sold
+from ticketsService.sold_tickets_db import create_sold_tickets
 from datetime import datetime
 
 
 def create_concert(name: str, date: datetime, city: str,
-                   place: str, tickets: [Tickets], sold_tickets: [Sold] = None,
+                   place: str, tickets: [Tickets] = None, sold_tickets: [Sold] = None,
                    description: str = None):
     try:
-        if sold_tickets is None:
-            for t in tickets:
-                sold_tickets = create_sold_tickets(0, type=t.type)
-        new_concert = Concert(name, date, city, place, description,
-                              tickets=tickets, sold_tickets=sold_tickets)
+        # if sold_tickets is None:
+        #     sold_tickets = []
+        #     for t in tickets:
+        #         sold_tickets.append(create_sold_tickets(0, t.type))
+
+        new_concert = Concert(name, date, city, place, description)
+        if tickets:
+            new_concert.tickets = tickets
+        if sold_tickets:
+            new_concert.sold_tickets = sold_tickets
+
         db.session.add(new_concert)
         db.session.commit()
 
-        return {'ok': True}
+        return {'ok': True, 'concert': new_concert}
 
     except Exception as ex:
         stacktrace = traceback.format_exc()
@@ -32,6 +38,14 @@ def read_concert(_id):
         concert = Concert.query.filter_by(id=_id).first()
         if concert:
             return {'ok': True, 'concert': concert}
+    return {'ok': False}
+
+
+def read_concerts_by_city(city):
+    if city:
+        concerts = Concert.query.filter_by(city=city).all()
+        if concerts:
+            return {'ok': True, 'concerts': concerts}
     return {'ok': False}
 
 
@@ -53,7 +67,7 @@ def update_concert(_id: int, name: str = None, date: datetime = None,
             concert.update()
             db.session.commit()
 
-            return {'ok': True}
+            return {'ok': True, 'concert': concert}
 
     return {'ok': False}
 

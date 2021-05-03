@@ -1,11 +1,13 @@
 import traceback
-from ticketService import app
-from ticketService import db
-from ticketService.tickets_models import Tickets, Type
+from ticketsService import app
+from ticketsService import db
+from ticketsService.tickets_models import Tickets, Type
 
 
-def create_tickets(count: int, price: int, tickets_type: Type = None, tickets_type_name: str = None):
+def create_tickets(count: int, price: int, concert_id: int,
+                   tickets_type: Type = None, tickets_type_name: str = None):
     try:
+        _type = None
         if tickets_type_name:
             _type = Type.query.filter_by(type=tickets_type_name).first()
             if _type is None:
@@ -13,12 +15,15 @@ def create_tickets(count: int, price: int, tickets_type: Type = None, tickets_ty
                 Type.query.add(_type)
         elif tickets_type:
             _type = tickets_type
-            
-        new_tickets = Tickets(count, price, type=_type)
+
+        new_tickets = Tickets(count, price, concert_id)
+        if _type:
+            new_tickets.type = _type
+
         db.session.add(new_tickets)
         db.session.commit()
 
-        return {'ok': True}
+        return {'ok': True, 'tickets': new_tickets}
 
     except Exception as ex:
         stacktrace = traceback.format_exc()
@@ -37,10 +42,16 @@ def read_concert_tickets(_id):
 
 def read_all_concert_tickets_by_concert_id(_id):
     if _id:
-        tickets = Tickets.query.filter_by(concert_id=_id)
+        tickets = Tickets.query.filter_by(concert_id=_id).all()
         if tickets:
-            return {'ok': True, 'tickets': tickets}
+            return {'ok': True, 'all_tickets': tickets}
     return {'ok': False}
+
+
+def read_ticket_types():
+    types = []
+
+    return {'ok': True, 'types': types}
 
 
 def update_tickets(_id: int, count: int = None, price: int = None, type_id: int = None, tickets_type: str = None):
@@ -60,7 +71,7 @@ def update_tickets(_id: int, count: int = None, price: int = None, type_id: int 
             tickets.update()
             db.session.commit()
 
-            return {'ok': True}
+            return {'ok': True, 'tickets': tickets}
 
     return {'ok': False}
 

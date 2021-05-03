@@ -1,5 +1,5 @@
 from datetime import datetime
-from ticketService import db
+from ticketsService import db
 
 
 class Tickets(db.Model):
@@ -10,10 +10,14 @@ class Tickets(db.Model):
     count = db.Column(db.Integer, nullable=False)
     price = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, count: int, price: int, **kwargs):
+    def __init__(self, count: int, price: int, concert_id: int, **kwargs):
         self.count = count
         self.price = price
+        self.concert_id = concert_id
         super().__init__(**kwargs)
+
+    def to_json(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 class Sold(db.Model):
@@ -24,9 +28,14 @@ class Sold(db.Model):
     user_id = db.Column(db.Integer, nullable=False)
     count = db.Column(db.Integer, nullable=False)
 
-    def __init__(self, count: int, **kwargs):
+    def __init__(self, count: int, concert_id: int, user_id: int, **kwargs):
         self.count = count
+        self.concert_id = concert_id
+        self.user_id = user_id
         super().__init__(**kwargs)
+
+    def to_json(self):
+        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 
 
 class Type(db.Model):
