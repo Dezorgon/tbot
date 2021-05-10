@@ -68,9 +68,6 @@ class Concert(db.Model):
         self.description = description
         super().__init__(**kwargs)
 
-    def __repr__(self):
-        return f'concert {self.id}'
-
     def to_json(self):
         return {c.name: getattr(self, c.name) for c in self.__table__.columns}
 

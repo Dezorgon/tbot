@@ -5,14 +5,17 @@ from ticketsService.tickets_models import Tickets, Type
 
 
 def create_tickets(count: int, price: int, concert_id: int,
-                   tickets_type: Type = None, tickets_type_name: str = None):
+                   tickets_type: Type = None, tickets_type_id: int = None,
+                   tickets_type_name: str = None):
     try:
         _type = None
         if tickets_type_name:
             _type = Type.query.filter_by(type=tickets_type_name).first()
             if _type is None:
                 _type = Type(tickets_type_name)
-                Type.query.add(_type)
+                db.session.add(_type)
+        if tickets_type_id:
+            _type = Type.query.filter_by(id=tickets_type_id).first()
         elif tickets_type:
             _type = tickets_type
 
@@ -28,6 +31,7 @@ def create_tickets(count: int, price: int, concert_id: int,
     except Exception as ex:
         stacktrace = traceback.format_exc()
         app.logger.debug(stacktrace)
+        print(stacktrace)
         db.session.rollback()
         return {'ok': False}
 

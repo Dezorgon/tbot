@@ -8,25 +8,44 @@ import sold_tickets_db
 
 
 @app.route("/concerts", methods=["POST"])
-def add_concert():
+def create_concert():
     name = request.json['name']
     date = request.json['date']
     city = request.json['city']
     place = request.json['place']
-    tickets = request.json['tickets']
+    # tickets = request.json['tickets']
     description = request.json['description']
 
     response = concert_db.create_concert(name=name, date=date, city=city, place=place, description=description)
 
     if response['ok']:
-        concert = response['concert']
+        # concert = response['concert']
 
-        for t in tickets:
-            new_tickets = tickets_db.create_tickets(t['count'], t['price'], concert.id, tickets_type_name=t['type'])
-            concert.tickets.append(new_tickets)
+        # for t in tickets:
+        #     new_tickets = tickets_db.create_tickets(t['count'], t['price'], concert.id, tickets_type_name=t['type'])
+        #     concert.tickets.append(new_tickets)
 
         response['concert'] = response['concert'].to_json()
         response = dict(**response, **{'message': 'signup'})
+
+    return jsonify(response)
+
+
+@app.route("/concerts/<int:concert_id>/tickets", methods=["POST"])
+def create_tickets(concert_id):
+    count = request.json['count']
+    price = request.json['price']
+    tickets_type = request.json['type']
+
+    response = tickets_db.create_tickets(count, price, concert_id, tickets_type_name=tickets_type)
+
+    if response['ok']:
+        # tickets = response['tickets']
+        #
+        # new_tickets = tickets_db.create_tickets(tickets['count'], tickets['price'], concert_id, tickets_type_name=t['type'])
+        # # concert.tickets.append(new_tickets)
+
+        response['tickets'] = response['tickets'].to_json()
 
     return jsonify(response)
 
