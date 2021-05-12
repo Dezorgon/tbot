@@ -69,7 +69,9 @@ class Concert(db.Model):
         super().__init__(**kwargs)
 
     def to_json(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        d['date'] = str(d['date'])
+        return d
 
 
 db.create_all()

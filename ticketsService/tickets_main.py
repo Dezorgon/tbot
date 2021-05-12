@@ -2,19 +2,22 @@ import traceback
 from flask import request, jsonify
 from ticketsService import app, db
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
-import concert_db
 import tickets_db
+import concert_db
 import sold_tickets_db
+from datetime import datetime
 
 
 @app.route("/concerts", methods=["POST"])
 def create_concert():
     name = request.json['name']
-    date = request.json['date']
+    date = datetime.strptime(request.json['date'], '%Y-%m-%d %H:%M:%S.%f')
     city = request.json['city']
     place = request.json['place']
-    # tickets = request.json['tickets']
-    description = request.json['description']
+    # tickets = renquest.json['tickets']
+    description = None
+    if 'description' in request.json:
+        description = request.json['description']
 
     response = concert_db.create_concert(name=name, date=date, city=city, place=place, description=description)
 
@@ -28,6 +31,34 @@ def create_concert():
         response['concert'] = response['concert'].to_json()
         response = dict(**response, **{'message': 'signup'})
 
+    return jsonify(response)
+
+
+@app.route('/concerts/<int:concert_id>', methods=['PUT'])
+def update_concert(concert_id):
+    raise NotImplemented
+
+
+@app.route('/concerts/<int:concert_id>', methods=['DELETE'])
+def delete_concert(concert_id):
+    response = concert_db.delete_concert(concert_id)
+    return jsonify(response)
+
+
+@app.route('/concerts/<int:concert_id>', methods=['GET'])
+def get_concert(concert_id):
+    response = concert_db.read_concert(concert_id)
+    response['concert'] = response['concert'].to_json()
+    return jsonify(response)
+
+
+@app.route('/concerts/<city>', methods=['GET'])
+def get_concerts_by_city(city):
+    response = concert_db.read_concerts_by_city(city)
+
+    if response['ok']:
+        for i in range(len(response['concerts'])):
+            response['concerts'][i] = response['concerts'][i].to_json()
     return jsonify(response)
 
 
@@ -50,43 +81,41 @@ def create_tickets(concert_id):
     return jsonify(response)
 
 
-@app.route('/concerts/<int:concert_id>', methods=['PUT'])
-def update_concert(concert_id):
+@app.route('/tickets/<int:tickets_id>', methods=['PUT'])
+def update_tickets(tickets_id):
     raise NotImplemented
 
 
-@app.route('/concerts/<int:concert_id>', methods=['DELETE'])
-def delete_concert(concert_id):
-    response = concert_db.delete_concert(concert_id)
+@app.route('/tickets/<int:tickets_id>', methods=['DELETE'])
+def delete_tickets(tickets_id):
+    response = tickets_db.delete_tickets(tickets_id)
     return jsonify(response)
 
 
-@app.route('/concerts/<int:concert_id>', methods=['GET'])
-def get_concert(concert_id):
-    response = concert_db.read_concert(concert_id)
+@app.route('/tickets/<int:tickets_id>', methods=['GET'])
+def get_tickets(tickets_id):
+    response = tickets_db.read_concert_tickets(tickets_id)
     return jsonify(response)
 
 
-@app.route('/concerts/<str:city>', methods=['GET'])
-def get_concerts_by_city(city):
-    response = concert_db.read_concerts_by_city(city)
+@app.route('/concerts/<int:concert_id>/tickets', methods=['GET'])
+def get_concert_tickets(concert_id):
+    response = tickets_db.read_all_concert_tickets_by_concert_id(concert_id)
+    for i in range(len(response['all_tickets'])):
+        response['all_tickets'][i] = response['all_tickets'][i].to_json()
     return jsonify(response)
 
 
-@app.route('/buy', methods=['GET'])
-def buy_ticket():
+@app.route("/concerts/<int:concert_id>/buy", methods=["POST"])
+def buy_ticket(concert_id):
     response = sold_tickets_db.filter_sold_tickets(
-        request.json['concert_id'], current_user.id, request.json['type_id'])
+        concert_id, current_user.id, request.json['type'])
 
     if response['ok']:
         t = response['all_sold_tickets'][0]
-        sold_tickets_db.update_sold_tickets(t.id, count=t.count+1)
+        sold_tickets_db.update_sold_tickets(t.id, count=t.count + 1)
         return jsonify({'ok': True})
     else:
         sold_tickets_db.create_sold_tickets(1, request.json['concert_id'], current_user.id, request.json['type_id'])
 
     return jsonify({'ok': False})
-
-
-
-
