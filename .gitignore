@@ -3,4 +3,4 @@ venv/
 */__pycache__/
 main.py
 */1.py
-
+*.json
