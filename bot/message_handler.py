@@ -41,8 +41,8 @@ def send_message():
             if msg in d:
                 d[msg]()
     if "callback_query" in request.json:
-        data = request.json["message"]["data"]
-        for d in functions['message']:
+        data = request.json["callback_query"]["data"]
+        for d in functions['callback']:
             if data in d:
                 d[data]()
     return {"ok": True}
