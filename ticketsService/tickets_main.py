@@ -2,9 +2,9 @@ import traceback
 from flask import request, jsonify
 from ticketsService import app, db
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
-import tickets_db
-import concert_db
-import sold_tickets_db
+from ticketsService import tickets_db
+from ticketsService import concert_db
+from ticketsService import sold_tickets_db
 from datetime import datetime
 
 
@@ -95,14 +95,17 @@ def delete_tickets(tickets_id):
 @app.route('/tickets/<int:tickets_id>', methods=['GET'])
 def get_tickets(tickets_id):
     response = tickets_db.read_concert_tickets(tickets_id)
+    if response['ok']:
+        response['tickets'] = response['tickets'].to_json()
     return jsonify(response)
 
 
 @app.route('/concerts/<int:concert_id>/tickets', methods=['GET'])
 def get_concert_tickets(concert_id):
     response = tickets_db.read_all_concert_tickets_by_concert_id(concert_id)
-    for i in range(len(response['all_tickets'])):
-        response['all_tickets'][i] = response['all_tickets'][i].to_json()
+    if response['ok']:
+        for i in range(len(response['all_tickets'])):
+            response['all_tickets'][i] = response['all_tickets'][i].to_json()
     return jsonify(response)
 
 
@@ -119,3 +122,7 @@ def buy_ticket(concert_id):
         sold_tickets_db.create_sold_tickets(1, request.json['concert_id'], current_user.id, request.json['type_id'])
 
     return jsonify({'ok': False})
+
+
+if __name__ == '__main__':
+    app.run(debug=True, port=80)

@@ -17,7 +17,10 @@ class Tickets(db.Model):
         super().__init__(**kwargs)
 
     def to_json(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        del d['type_id']
+        d['type'] = self.type.type
+        return d
 
 
 class Sold(db.Model):
@@ -35,7 +38,10 @@ class Sold(db.Model):
         super().__init__(**kwargs)
 
     def to_json(self):
-        return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        d = {c.name: getattr(self, c.name) for c in self.__table__.columns}
+        del d['type_id']
+        d['type'] = self.type.type
+        return d
 
 
 class Type(db.Model):

@@ -1,4 +1,5 @@
 import json
+import copy
 
 
 class Markup:
@@ -22,7 +23,7 @@ class Message:
         self.reply_markup: Markup = reply_markup
 
     def to_json(self):
-        d = {k: v for k, v in self.__dict__.items() if v is not None}
+        d = copy.deepcopy({k: v for k, v in self.__dict__.items() if v is not None})
         if 'reply_markup' in d:
             d['reply_markup'] = json.dumps(d['reply_markup'].to_json())
         return d
@@ -34,7 +35,7 @@ class KeyboardButton(Button):
         self.request_contact = request_contact
 
     def to_json(self):
-        return {k: v for k, v in self.__dict__.items() if v is not None}
+        return copy.deepcopy({k: v for k, v in self.__dict__.items() if v is not None})
 
 
 class ReplyKeyboardMarkup(Markup):
@@ -44,7 +45,7 @@ class ReplyKeyboardMarkup(Markup):
         self.one_time_keyboard = one_time_keyboard
 
     def to_json(self):
-        d = {k: v for k, v in self.__dict__.items() if v is not None}
+        d = copy.deepcopy({k: v for k, v in self.__dict__.items() if v is not None})
         for row in d['keyboard']:
             for i in range(len(row)):
                 row[i] = row[i].to_json()
@@ -59,7 +60,7 @@ class InlineKeyboardButton(Button):
         self.pay = pay
 
     def to_json(self):
-        return {k: v for k, v in self.__dict__.items() if v is not None}
+        return copy.deepcopy({k: v for k, v in self.__dict__.items() if v is not None})
 
 
 class InlineKeyboardMarkup(Markup):
@@ -67,7 +68,7 @@ class InlineKeyboardMarkup(Markup):
         self.inline_keyboard: [[InlineKeyboardButton]] = inline_keyboard
 
     def to_json(self):
-        d = {k: v for k, v in self.__dict__.items() if v is not None}
+        d = copy.deepcopy({k: v for k, v in self.__dict__.items() if v is not None})
         for row in d['inline_keyboard']:
             for i in range(len(row)):
                 row[i] = row[i].to_json()

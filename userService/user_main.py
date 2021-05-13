@@ -12,12 +12,12 @@ def index():
 
 @app.route("/signup", methods=["POST"])
 def signup():
-    first_name = request.json['first_name']
-    last_name = request.json['last_name']
-    permission = request.json['permission']
-    phone = request.json['phone']
-    password_hash = request.json['password_hash']
-    chat_id = request.json['chat_id']
+    first_name = request.json.get('first_name')
+    last_name = request.json.get('last_name')
+    permission = request.json.get('permission')
+    phone = request.json.get('phone')
+    password_hash = request.json.get('password_hash')
+    chat_id = request.json.get('chat_id')
 
     response = user_db.create_user(permission, password_hash, first_name, last_name, phone, chat_id)
 
@@ -31,16 +31,17 @@ def signup():
 def login():
     try:
         chat_id = request.json['chat_id']
-        password_hash = request.json['password_hash']
+        password_hash = request.json.get('password_hash')
         user = user_db.read_user_by_chat_id(chat_id)
 
         response = {'ok': True}
 
         if user:
-            if user.password_hash == password_hash:
-                response = dict(**response, **{'massage': 'login'})
-            else:
-                response = dict(**response, **{'massage': 'wrong password'})
+            if password_hash:
+                if user.password_hash == password_hash:
+                    response = dict(**response, **{'massage': 'login'})
+                else:
+                    response = dict(**response, **{'massage': 'wrong password'})
         else:
             response['ok'] = False
             response = dict(**response, **{'massage': 'user is not registered'})
