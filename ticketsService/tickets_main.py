@@ -112,7 +112,7 @@ def get_concert_tickets(concert_id):
 @app.route("/concerts/<int:concert_id>/buy", methods=["POST"])
 def buy_ticket(concert_id):
     response = sold_tickets_db.filter_sold_tickets(
-        concert_id, current_user.id, request.json['type'])
+        concert_id, request.json['user_id'], type_name=request.json['type'])
 
     if response['ok']:
         t = response['all_sold_tickets'][0]

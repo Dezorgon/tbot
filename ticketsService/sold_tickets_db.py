@@ -43,7 +43,17 @@ def read_concert_sold_tickets(_id):
     return {'ok': False}
 
 
-def filter_sold_tickets(concert_id=None, user_id=None, type_id=None):
+def filter_sold_tickets(concert_id=None, user_id=None, type_id=None, type_name=None):
+    _type = None
+    if type_name:
+        _type = Type.query.filter_by(type=type_name).first()
+        if _type is None:
+            _type = Type(type_name)
+            db.session.add(_type)
+
+    if type_id is None and _type:
+        type_id = _type.id
+
     sold_tickets = Sold.query.filter_by(
         sql.or_(db.sold.concert_id == concert_id, db.sold.user_id == user_id,
                 db.sold.type_id == type_id)).all()

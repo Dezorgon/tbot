@@ -14,6 +14,7 @@ class Handler:
         def decorator(func):
 
             if next_func:
+                app.logger.debug('next func init')
                 self.next_functions[func] = next_func
             if message:
                 for m in message:
@@ -38,6 +39,7 @@ class Handler:
         app.logger.debug(request.json)
         func_to_invoke = None
         if self.next_function:
+            app.logger.debug('next func invoke')
             func_to_invoke = self.next_function
             self.next_function = None
         else:
@@ -61,6 +63,7 @@ class Handler:
             if route in d:
                 func = d[route]
                 if func in self.next_functions:
+                    app.logger.debug('next func set')
                     self.next_function = self.next_functions[func]
                 return func
         return None

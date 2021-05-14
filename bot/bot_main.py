@@ -1,6 +1,10 @@
-from flask import request
+from flask import request, session
 import requests
 
+from bot.dialog.dialog_bot import DialogBot
+from bot.dialog.registration_dialog import register_dialog
+from bot.Updater import Updater
+from bot.markup import get_start_markup, ticket_markup, concert_markup
 from bot.models.user import User
 from bot.tg_models import *
 from bot import app
@@ -12,24 +16,31 @@ token = "1783536914:AAGKrclSrCaPUZCsZt-8I3qiPmjIf24cCu0"
 url = f"https://api.telegram.org/bot{token}/"
 
 handler = Handler()  # сессии
+updater = Updater([handler.send_message])
+
+dialog = DialogBot(register_dialog, updater)
+
 concert_pagination = ConcertPagination()
 ticket_pagination = TicketPagination()
+
 current_user = User()
 
-b1 = InlineKeyboardButton('<', callback_data='previous_concert')
-b2 = InlineKeyboardButton('>', callback_data='next_concert')
-b3 = InlineKeyboardButton('купить билет', callback_data='buy')
-concert_markup = InlineKeyboardMarkup([[b1, b2], [b3]])
 
-b1 = InlineKeyboardButton('<', callback_data='previous_ticket')
-b2 = InlineKeyboardButton('>', callback_data='next_ticket')
-b3 = InlineKeyboardButton('купить', callback_data='buy_ticket')
-ticket_markup = InlineKeyboardMarkup([[b1, b2], [b3]])
+# session
 
 
 @app.route('/', methods=["GET", "POST"])
 def main():
-    return handler.send_message()
+    app.logger.debug('main')
+
+    if 'callback_query' in request.json:
+        external_id = request.json["callback_query"]["from"]["id"]
+    else:
+        external_id = request.json["message"]["from"]["id"]
+
+    updater.update(external_id)
+    return {'ok': True}
+    # return handler.send_message()
 
 
 def send_message(chat_id, text, reply_markup=None):
@@ -49,64 +60,83 @@ def edit_message(chat_id, message_id, text, reply_markup=None):
     requests.post(url + method, data=data)
 
 
+def process_dialog():
+    chat_id = request.json["message"]["chat"]["id"]
+    external_id = request.json["message"]["from"]["id"]
+    text = request.json["message"]["text"]
+    register_dialog.handle_message(chat_id, text)
+
+
 @handler.message_handler(commands=['/start', '/help'])
 def process_commands():
     chat_id = request.json["message"]["chat"]["id"]
-    b1 = KeyboardButton('Посмотреть концерты в моем городе')
-    b2 = KeyboardButton('Ближайшие концерты')
-    rm = ReplyKeyboardMarkup([[b1], [b2]])
-    send_message(chat_id, "Здесь ты можешь купить билеты", rm)
+    external_id = request.json["message"]["from"]["id"]
+
+    current_user.external_id = external_id
+
+    if not login(external_id):
+        register(external_id)
+    else:
+        send_message(chat_id, "Здесь ты можешь купить билеты", get_start_markup(current_user.is_authenticated))
     return {"ok": True}
 
 
+@handler.message_handler(callback=['accept_register_data'])
 def input_registration_data():
-    data = request.json["message"]["text"]
-    data = data.split()
-    current_user.set(data[1], data[0], data[3])
+    external_id = request.json["callback_query"]["from"]["id"]
+    text = request.json["callback_query"]["message"]["text"].split()
+    app.logger.debug(register_dialog.input_data[external_id])
+    first_name = text[0]
+    last_name = text[1]
+    date = text[2]
+    permission = 'user'
 
-
-def login():
-    # проверка id в бд и запись в user
-    response = requests.post('http://127.0.0.1:81/login', data={'chat_id': id})
+    response = requests.post('http://127.0.0.1:81/signup',
+                             json={'first_name': first_name, 'last_name': last_name,
+                                   'external_id': external_id, 'date': date,
+                                   'permission': permission})
     response = response.json()
 
-    if response['ok']:
-        current_user.set()
+    if not response['ok']:
+        send_message(external_id, "Что-то пошло не так")
+        register(external_id)
     else:
-        register()
+        login(external_id)
 
 
-@handler.message_handler(message=['Регистрация'], next_func=input_registration_data)
-def register():
-    # запись в бд и login  и запись в user
-    chat_id = request.json["message"]["chat"]["id"]
-    send_message(chat_id, "Фамилия Имя Дата рождения\nИванов Иван 16.03.1998")
+def login(external_id):
+    response = requests.post('http://127.0.0.1:81/login', json={'external_id': external_id})
+    response = response.json()
+    app.logger.debug(response)
+
+    if response['ok']:
+        user = response['user']
+        current_user.set(user['id'], external_id, user['first_name'],
+                         user['last_name'], user['date'], user['permission'])
+
+        send_message(external_id, "Я помню тебя)", get_start_markup())
+        return True
+    else:
+        return False
+
+
+def register(external_id):
+    app.logger.debug('register')
+    updater.intercept_routing(external_id, process_dialog)
+    process_dialog()
+    # send_message(chat_id, "Давай-ка ты оставишь нам свои данные)")
+    # send_message(chat_id, "Фамилия Имя Дата рождения\nИванов Иван 16.03.1998")
     return {"ok": True}
 
 
 @handler.message_handler(callback=['buy_ticket'])
 def buy_ticket():
-    if current_user.is_authenticated:
-        pass
-    # chat_id = request.json["callback_query"]["message"]["chat"]["id"]
-    # message_id = request.json["callback_query"]["message"]["message_id"]
-    #
-    # concert = concert_pagination.current()
-    # response = requests.get('http://127.0.0.1:80/concerts/' + str(concert.id) + '/tickets')
-    # response = response.json()
-    #
-    # if not response['ok']:
-    #     send_message(chat_id, "Видимо на этот концерт еще нет билетов")
-    #     return {"ok": False}
-    #
-    # ticket_pagination.set(response['all_tickets'])
-    #
-    # b1 = InlineKeyboardButton('<', callback_data='previous_ticket')
-    # b2 = InlineKeyboardButton('>', callback_data='next_ticket')
-    # b3 = InlineKeyboardButton('купить', callback_data='buy_ticket')
-    # markup = InlineKeyboardMarkup([[b1, b2], [b3]])
-    #
-    # send_message(chat_id, ticket_pagination.current(), markup)
+    if not current_user.is_authenticated:
+        if not login(current_user.external_id):
+            register(current_user.external_id)
+    data = {'user_id': current_user.id, 'type': ticket_pagination.current().type}
+    response = requests.post("http://127.0.0.1:80/concerts/" + str(concert_pagination.current().id) + "/buy", data=data)
+
     return {"ok": True}
 
 
