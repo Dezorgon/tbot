@@ -55,8 +55,8 @@ def filter_sold_tickets(concert_id=None, user_id=None, type_id=None, type_name=N
         type_id = _type.id
 
     sold_tickets = Sold.query.filter_by(
-        sql.or_(db.sold.concert_id == concert_id, db.sold.user_id == user_id,
-                db.sold.type_id == type_id)).all()
+        sql.or_(Sold.concert_id == concert_id, Sold.user_id == user_id,
+                Sold.type_id == type_id)).all()
 
     if sold_tickets:
         return {'ok': True, 'all_sold_tickets': sold_tickets}
