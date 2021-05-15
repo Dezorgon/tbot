@@ -52,6 +52,16 @@ def get_concert(concert_id):
     return jsonify(response)
 
 
+@app.route('/concerts/top/<int:count>', methods=['GET'])
+def get_top_concerts(count):
+    response = concert_db.read_top_concerts(count)
+
+    if response['ok']:
+        for i in range(len(response['concerts'])):
+            response['concerts'][i] = response['concerts'][i].to_json()
+    return jsonify(response)
+
+
 @app.route('/concerts/<city>', methods=['GET'])
 def get_concerts_by_city(city):
     response = concert_db.read_concerts_by_city(city)

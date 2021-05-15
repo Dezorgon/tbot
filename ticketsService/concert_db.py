@@ -1,4 +1,7 @@
 import traceback
+
+from sqlalchemy import desc
+
 from ticketsService import app
 from ticketsService import db
 from ticketsService.tickets_models import Concert, Tickets, Sold
@@ -38,6 +41,13 @@ def read_concert(_id):
         concert = Concert.query.filter_by(id=_id).first()
         if concert:
             return {'ok': True, 'concert': concert}
+    return {'ok': False}
+
+
+def read_top_concerts(count):
+    tickets = Concert.query.order_by(Concert.date).limit(count).all()
+    if tickets:
+        return {'ok': True, 'concerts': tickets}
     return {'ok': False}
 
 
