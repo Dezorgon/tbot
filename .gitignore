@@ -1,7 +1,7 @@
 .idea/
 venv/
 */__pycache__/
-bot/models/__pycache__/
+*/*/__pycache__/
 main.py
 */1.py
 *.json
