@@ -133,15 +133,27 @@ def get_concert_tickets(concert_id):
     return jsonify(response)
 
 
+@app.route('/sold_tickets/<int:user_id>', methods=['GET'])
+def get_user_sold_tickets(user_id):
+    response = sold_tickets_db.filter_sold_tickets(user_id=user_id)
+    if response['ok']:
+        for i in range(len(response['sold_tickets'])):
+            response['sold_tickets'][i] = response['sold_tickets'][i].to_json()
+            response['sold_tickets'][i]['concert'] =\
+                concert_db.read_concert(response['sold_tickets'][i]['concert_id'])['concert'].name
+            del response['sold_tickets'][i]['user_id']
+    return jsonify(response)
+
+
 @app.route("/concerts/<int:concert_id>/buy", methods=["POST"])
 def buy_ticket(concert_id):
-    response = sold_tickets_db.filter_sold_tickets(request.json['user_id'])
+    response = sold_tickets_db.filter_sold_tickets(user_id=request.json['user_id'])
 
     ticket = None
     if response['ok']:
-        for ticket in response['all_sold_tickets']:
-            if ticket.concert_id == concert_id and ticket.type == request.json['type']:
-                ticket = ticket
+        for t in response['sold_tickets']:
+            if t.concert_id == concert_id and t.type.type == request.json['type']:
+                ticket = t
 
     if ticket:
         response = sold_tickets_db.update_sold_tickets(ticket.id, count=ticket.count + 1)

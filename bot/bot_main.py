@@ -115,6 +115,25 @@ def login(external_id):
         return False
 
 
+@handler.message_handler(message=['Профиль'])
+def represent_profile():
+    external_id = session['external_id']
+
+    login(external_id)
+
+    response = requests.get('http://127.0.0.1:80/sold_tickets/' + str(external_id))
+    response = response.json()
+
+    text = f'{current_user.last_name} {current_user.first_name}\n\nБилеты:\n'
+    if response['ok']:
+        sold_tickets = response['sold_tickets']
+        for ticket in sold_tickets:
+            text += f'{ticket["concert"]} {ticket["type"]} {ticket["count"]}шт\n'
+    send_message(external_id, text)
+
+    return {"ok": True}
+
+
 @handler.message_handler(message=['Регистрация'], callback=['re_register'])
 def register():
     external_id = session['external_id']
@@ -263,10 +282,6 @@ def get_top_concerts():
         send_concerts_representation_message(chat_id, "Хм, нет концертов?", [])
         return {"ok": False}
 
-    # b1 = InlineKeyboardButton('Посмотреть поближе', callback_data='see_details')
-    # markup = InlineKeyboardMarkup([[b1]])
-    # resp = send_message(chat_id, "concerts", markup)
-    # resp = resp.json()
     send_concerts_representation_message(chat_id, str(Concert(response['concerts'][0])),
                                          response['concerts'], concert_markup)
     return {"ok": True}

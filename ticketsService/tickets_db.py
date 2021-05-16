@@ -46,7 +46,7 @@ def read_concert_tickets(_id):
         sold_count = 0
 
         if sold_tickets['ok']:
-            for sold in sold_tickets['all_sold_tickets']:
+            for sold in sold_tickets['sold_tickets']:
                 if sold.type == ticket.type:
                     sold_count += sold.count
 
@@ -66,7 +66,7 @@ def read_all_concert_tickets_by_concert_id(_id):
             sold_count = 0
 
             if sold_tickets['ok']:
-                for sold in sold_tickets['all_sold_tickets']:
+                for sold in sold_tickets['sold_tickets']:
                     if sold.type == ticket.type:
                         sold_count += sold.count
 

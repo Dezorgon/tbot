@@ -26,7 +26,7 @@ def create_sold_tickets(count: int, concert_id: int, user_id: int,
         db.session.add(new_sold_tickets)
         db.session.commit()
 
-        return {'ok': True, 'sold_tickets': new_sold_tickets}
+        return {'ok': True, 'sold_ticket': new_sold_tickets}
 
     except Exception as ex:
         stacktrace = traceback.format_exc()
@@ -39,7 +39,7 @@ def read_concert_sold_tickets(_id):
     if _id:
         sold_tickets = Sold.query.filter_by(id=_id).first()
         if sold_tickets:
-            return {'ok': True, 'sold_tickets': sold_tickets}
+            return {'ok': True, 'sold_ticket': sold_tickets}
     return {'ok': False}
 
 
@@ -63,7 +63,7 @@ def filter_sold_tickets(concert_id=None, user_id=None, type_id=None, type_name=N
         sold_tickets = Sold.query.filter_by(type_id=type_id).all()
 
     if sold_tickets:
-        return {'ok': True, 'all_sold_tickets': sold_tickets}
+        return {'ok': True, 'sold_tickets': sold_tickets}
     return {'ok': False}
 
 
