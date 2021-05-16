@@ -54,9 +54,13 @@ def filter_sold_tickets(concert_id=None, user_id=None, type_id=None, type_name=N
     if type_id is None and _type:
         type_id = _type.id
 
-    sold_tickets = Sold.query.filter_by(
-        sql.or_(Sold.concert_id == concert_id, Sold.user_id == user_id,
-                Sold.type_id == type_id)).all()
+    sold_tickets = None
+    if concert_id:
+        sold_tickets = Sold.query.filter_by(concert_id=concert_id).all()
+    if user_id:
+        sold_tickets = Sold.query.filter_by(user_id=user_id).all()
+    if type_id:
+        sold_tickets = Sold.query.filter_by(type_id=type_id).all()
 
     if sold_tickets:
         return {'ok': True, 'all_sold_tickets': sold_tickets}
@@ -85,13 +89,13 @@ def update_sold_tickets(_id: int, count: int = None, concert_id: int = None, use
 
         if sold_tickets:
             if count:
-                sold_tickets['count'] = count
+                sold_tickets.count = count
             if concert_id:
-                sold_tickets['concert_id'] = concert_id
+                sold_tickets.concert_id = concert_id
             if user_id:
-                sold_tickets['user_id'] = user_id
+                sold_tickets.user_id = user_id
 
-            sold_tickets.update()
+            db.session.add(sold_tickets)
             db.session.commit()
 
             return {'ok': True, 'sold_tickets': sold_tickets}

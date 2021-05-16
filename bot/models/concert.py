@@ -11,7 +11,8 @@ class Concert:
             self.description = None
 
     def __str__(self):
-        s = f"{self.id} {self.name}\n{self.city} {self.place}\n{self.date}\n"
+        s = f"{self.name}\n\n{self.city} {self.place}\n{self.date}\n"
         if self.description:
+            s += '\n'
             s += self.description
         return s

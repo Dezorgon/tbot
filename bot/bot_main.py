@@ -1,14 +1,15 @@
 from flask import request, session
 import requests
+from random import randint
 
 from bot.dialog.dialog_bot import DialogBot
 from bot.dialog.registration_dialog import register_dialog
-from bot.Updater import Updater
+from bot.updater import Updater
 from bot.markup import get_start_markup, ticket_markup, concert_markup
 from bot.models.concert import Concert
+from bot.models.ticket import Ticket
 from bot.models.user import User
-from bot.tg_massage_methods import send_message, edit_message
-from bot.tg_models import *
+from bot.tg_massage_methods import send_message, edit_message, delete_message
 from bot import app
 from bot.message_handler import Handler
 from bot.models.concert_pagination import ConcertPagination
@@ -24,6 +25,9 @@ ticket_pagination = TicketPagination()
 
 current_user = User()
 
+not_handled_answers = ['У меня вообще-то команды есть', 'Что с тобой не так?',
+                       'Чел ты', 'Мне кажется тебе не нужны билеты']
+
 
 @app.route('/', methods=["GET", "POST"])
 def main():
@@ -38,9 +42,14 @@ def main():
 
     session['external_id'] = external_id
     session['message'] = message
-    updater.update(external_id)
+
+    is_handled = updater.update(external_id)
+
+    if not is_handled:
+        text = not_handled_answers[randint(0, len(not_handled_answers)-1)]
+        send_message(external_id, text, get_start_markup(True))
+
     return {'ok': True}
-    # return handler.send_message()
 
 
 def process_register_dialog():
@@ -106,7 +115,7 @@ def login(external_id):
         return False
 
 
-@handler.message_handler(callback=['re_register'])
+@handler.message_handler(message=['Регистрация'], callback=['re_register'])
 def register():
     external_id = session['external_id']
     app.logger.debug('register')
@@ -130,25 +139,52 @@ def buy_ticket():
             register()
 
     if current_user.is_authenticated:
-        data = {'user_id': current_user.id, 'type': ticket_pagination.current().type}
-        response = requests.post("http://127.0.0.1:80/concerts/" + str(concert_pagination.current().id) + "/buy", json=data)
+        data = {'user_id': current_user.external_id, 'type': ticket_pagination.current().type}
+        response = requests.post("http://127.0.0.1:80/concerts/" +
+                                 str(concert_pagination.current().id) + "/buy", json=data)
+        response = response.json()
+        print(response)
+        if response['ok']:
+            send_message(session['external_id'], 'Ну купил ты билет, а дальше то что?',
+                         get_start_markup(current_user.is_authenticated))
+
     return {"ok": True}
 
 
 @handler.message_handler(callback=['next_ticket', 'previous_ticket'])
 def represent_ticket_by_concert_id():
     external_id = session['external_id']
-    message_id = session['message']["message"]["message_id"]
+    message_id = session['message']["message_id"]
     callback = request.json["callback_query"]["data"]
 
     ticket = None
-    if callback == 'next_concert':
+    if callback == 'next_ticket':
         ticket = ticket_pagination.next()
-    if callback == 'previous_concert':
+    if callback == 'previous_ticket':
         ticket = ticket_pagination.prev()
 
     edit_message(external_id, message_id, ticket, ticket_markup)
     return {"ok": True}
+
+
+def send_tickets_representation_message(chat_id, text, tickets, markup=None):
+    if chat_id in ticket_pagination.massage_id:
+        delete_message(chat_id, ticket_pagination.massage_id[chat_id])
+
+    resp = send_message(chat_id, text, markup)
+    resp = resp.json()
+
+    ticket_pagination.set(tickets, chat_id, resp['result']['message_id'])
+
+
+def send_concerts_representation_message(chat_id, text, concerts, markup=None):
+    if chat_id in concert_pagination.massage_id:
+        delete_message(chat_id, concert_pagination.massage_id[chat_id])
+
+    resp = send_message(chat_id, text, markup)
+    resp = resp.json()
+
+    concert_pagination.set(concerts, chat_id, resp['result']['message_id'])
 
 
 @handler.message_handler(callback=['buy'])
@@ -156,17 +192,17 @@ def find_ticket_by_concert_id():
     external_id = session['external_id']
 
     concert = concert_pagination.current()
-    response = requests.get('http://127.0.0.1:80/concerts/' + str(concert.id) + '/tickets')
-    response = response.json()
+    response = {"ok": False}
+    if concert:
+        response = requests.get('http://127.0.0.1:80/concerts/' + str(concert.id) + '/tickets')
+        response = response.json()
 
     if not response['ok']:
-        send_message(external_id, "Видимо на этот концерт еще нет билетов")
+        send_tickets_representation_message(external_id, "Видимо на этот концерт еще нет билетов", [])
         return {"ok": False}
 
-    resp = send_message(external_id, ticket_pagination.current(), ticket_markup)
-    resp = resp.json()
-
-    concert_pagination.set(response['all_tickets'], external_id, resp['result']['message_id'])
+    send_tickets_representation_message(external_id, str(Ticket(response['tickets'][0])),
+                                        response['tickets'], ticket_markup)
     return {"ok": True}
 
 
@@ -194,13 +230,11 @@ def find_concert_by_city():
     response = response.json()
 
     if not response['ok']:
-        send_message(chat_id, "Я не нашел концертов в этом городе")
+        send_concerts_representation_message(chat_id, "Я не нашел концертов в этом городе", [])
         return {"ok": False}
 
-    resp = send_message(chat_id, concert_pagination.current(), concert_markup)
-    resp = resp.json()
-
-    concert_pagination.set(response['concerts'], chat_id, resp['result']['message_id'])
+    send_concerts_representation_message(chat_id, str(Concert(response['concerts'][0])),
+                                         response['concerts'], concert_markup)
     return {"ok": True}
 
 
@@ -226,17 +260,15 @@ def get_top_concerts():
     app.logger.debug(response)
 
     if not response['ok']:
-        send_message(chat_id, "Хм, что-то не нашлось концертов")
+        send_concerts_representation_message(chat_id, "Хм, нет концертов?", [])
         return {"ok": False}
 
     # b1 = InlineKeyboardButton('Посмотреть поближе', callback_data='see_details')
     # markup = InlineKeyboardMarkup([[b1]])
     # resp = send_message(chat_id, "concerts", markup)
     # resp = resp.json()
-    resp = send_message(chat_id, Concert(response['concerts'][0]), concert_markup)
-    resp = resp.json()
-
-    concert_pagination.set(response['concerts'], chat_id, resp['result']['message_id'])
+    send_concerts_representation_message(chat_id, str(Concert(response['concerts'][0])),
+                                         response['concerts'], concert_markup)
     return {"ok": True}
 
 

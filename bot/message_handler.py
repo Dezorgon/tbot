@@ -55,8 +55,9 @@ class Handler:
 
         if func_to_invoke:
             func_to_invoke()
+            return {"is_invoked": True}
 
-        return {"ok": True}
+        return {"is_invoked": False}
 
     def find_function(self, route, type_of_route):
         for d in self.functions[type_of_route]:

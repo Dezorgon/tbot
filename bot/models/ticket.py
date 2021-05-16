@@ -5,7 +5,8 @@ class Ticket:
         self.count = d['count']
         self.price = d['price']
         self.type = d['type']
+        self.left = d['left']
 
     def __str__(self):
-        s = f"{self.id} {self.id} {self.concert_id}\n{self.price}р {self.count}шт"
+        s = f"{self.type}\n{self.price}р {self.left}шт"
         return s

@@ -1,10 +1,9 @@
 import traceback
 
-from sqlalchemy import desc
-
 from ticketsService import app
 from ticketsService import db
 from ticketsService.tickets_models import Tickets, Type
+from ticketsService.sold_tickets_db import filter_sold_tickets
 
 
 def create_tickets(count: int, price: int, concert_id: int,
@@ -41,17 +40,43 @@ def create_tickets(count: int, price: int, concert_id: int,
 
 def read_concert_tickets(_id):
     if _id:
-        tickets = Tickets.query.filter_by(id=_id).first()
-        if tickets:
-            return {'ok': True, 'tickets': tickets}
+        ticket = Tickets.query.filter_by(id=_id).first()
+
+        sold_tickets = filter_sold_tickets(concert_id=ticket.concert_id)
+        sold_count = 0
+
+        if sold_tickets['ok']:
+            for sold in sold_tickets['all_sold_tickets']:
+                if sold.type == ticket.type:
+                    sold_count += sold.count
+
+        left = ticket.count - sold_count
+        if ticket:
+            return {'ok': True, 'ticket': ticket, 'left': left}
     return {'ok': False}
 
 
 def read_all_concert_tickets_by_concert_id(_id):
     if _id:
         tickets = Tickets.query.filter_by(concert_id=_id).all()
+        tickets_list = []
+
+        for ticket in tickets:
+            sold_tickets = filter_sold_tickets(concert_id=ticket.concert_id)
+            sold_count = 0
+
+            if sold_tickets['ok']:
+                for sold in sold_tickets['all_sold_tickets']:
+                    if sold.type == ticket.type:
+                        sold_count += sold.count
+
+            left = ticket.count - sold_count
+
+            tickets_list.append({'ticket': ticket, 'left': left})
+
         if tickets:
-            return {'ok': True, 'all_tickets': tickets}
+            return {'ok': True, 'tickets': tickets_list}
+
     return {'ok': False}
 
 

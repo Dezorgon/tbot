@@ -1,11 +1,20 @@
 import traceback
 from flask import request, jsonify
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 from ticketsService import app, db
 from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
 from ticketsService import tickets_db
 from ticketsService import concert_db
 from ticketsService import sold_tickets_db
 from datetime import datetime
+from ticketsService.tickets_models import Concert, Tickets, Sold, Type
+
+admin = Admin(app)
+admin.add_view(ModelView(Concert, db.session))
+admin.add_view(ModelView(Tickets, db.session))
+admin.add_view(ModelView(Sold, db.session))
+admin.add_view(ModelView(Type, db.session))
 
 
 @app.route("/concerts", methods=["POST"])
@@ -106,7 +115,9 @@ def delete_tickets(tickets_id):
 def get_tickets(tickets_id):
     response = tickets_db.read_concert_tickets(tickets_id)
     if response['ok']:
-        response['tickets'] = response['tickets'].to_json()
+        response['ticket'] = response['ticket'].to_json()
+        response['ticket']['left'] = response['left']
+        del response['left']
     return jsonify(response)
 
 
@@ -114,24 +125,30 @@ def get_tickets(tickets_id):
 def get_concert_tickets(concert_id):
     response = tickets_db.read_all_concert_tickets_by_concert_id(concert_id)
     if response['ok']:
-        for i in range(len(response['all_tickets'])):
-            response['all_tickets'][i] = response['all_tickets'][i].to_json()
+        for i in range(len(response['tickets'])):
+            response['tickets'][i]['ticket'] = response['tickets'][i]['ticket'].to_json()
+            response['tickets'][i]['ticket']['left'] = response['tickets'][i]['left']
+            del response['tickets'][i]['left']
+            response['tickets'][i] = response['tickets'][i]['ticket']
     return jsonify(response)
 
 
 @app.route("/concerts/<int:concert_id>/buy", methods=["POST"])
 def buy_ticket(concert_id):
-    response = sold_tickets_db.filter_sold_tickets(
-        concert_id, request.json['user_id'], type_name=request.json['type'])
+    response = sold_tickets_db.filter_sold_tickets(request.json['user_id'])
 
+    ticket = None
     if response['ok']:
-        t = response['all_sold_tickets'][0]
-        sold_tickets_db.update_sold_tickets(t.id, count=t.count + 1)
-        return jsonify({'ok': True})
-    else:
-        sold_tickets_db.create_sold_tickets(1, request.json['concert_id'], current_user.id, request.json['type_id'])
+        for ticket in response['all_sold_tickets']:
+            if ticket.concert_id == concert_id and ticket.type == request.json['type']:
+                ticket = ticket
 
-    return jsonify({'ok': False})
+    if ticket:
+        response = sold_tickets_db.update_sold_tickets(ticket.id, count=ticket.count + 1)
+    else:
+        response = sold_tickets_db.create_sold_tickets(1, concert_id, request.json['user_id'],
+                                                       tickets_type_name=request.json['type'])
+    return jsonify({'ok': response['ok']})
 
 
 if __name__ == '__main__':
