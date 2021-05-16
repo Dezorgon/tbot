@@ -1,7 +1,5 @@
 import traceback
 
-from sqlalchemy import sql
-
 from ticketsService import app
 from ticketsService import db
 from ticketsService.tickets_models import Sold, Type

@@ -2,9 +2,16 @@ import traceback
 from datetime import datetime
 
 from flask import request, jsonify
+from flask_admin import Admin
+from flask_admin.contrib.sqla import ModelView
 from userService import app, db
-from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
+from userService.user_models import User, Permission
 import user_db
+
+
+admin = Admin(app)
+admin.add_view(ModelView(User, db.session))
+admin.add_view(ModelView(Permission, db.session))
 
 
 @app.route("/", methods=["GET", "POST"])

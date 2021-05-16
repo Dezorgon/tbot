@@ -1,11 +1,8 @@
 import traceback
 
-from sqlalchemy import desc
-
 from ticketsService import app
 from ticketsService import db
 from ticketsService.tickets_models import Concert, Tickets, Sold
-from ticketsService.sold_tickets_db import create_sold_tickets
 from datetime import datetime
 
 

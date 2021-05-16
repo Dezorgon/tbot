@@ -1,4 +1,3 @@
-from typing import Callable
 from flask import request
 
 from bot import app

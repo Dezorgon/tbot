@@ -3,7 +3,6 @@ from flask import request, jsonify
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from ticketsService import app, db
-from flask_login import LoginManager, UserMixin, login_required, login_user, logout_user, current_user
 from ticketsService import tickets_db
 from ticketsService import concert_db
 from ticketsService import sold_tickets_db

@@ -15,7 +15,7 @@ from bot.message_handler import Handler
 from bot.models.concert_pagination import ConcertPagination
 from bot.models.ticket_pagination import TicketPagination
 
-handler = Handler() # session
+handler = Handler()  # session
 updater = Updater([handler.send_message])
 
 dialog = DialogBot(register_dialog, updater)
@@ -153,14 +153,16 @@ def register():
 
 @handler.message_handler(callback=['buy_ticket'])
 def buy_ticket():
+    external_id = session['external_id']
+
     if not current_user.is_authenticated:
         if not login(session['external_id']):
             register()
 
     if current_user.is_authenticated:
-        data = {'user_id': current_user.external_id, 'type': ticket_pagination.current().type}
+        data = {'user_id': external_id, 'type': ticket_pagination.current(external_id).type}
         response = requests.post("http://127.0.0.1:80/concerts/" +
-                                 str(concert_pagination.current().id) + "/buy", json=data)
+                                 str(concert_pagination.current(external_id).id) + "/buy", json=data)
         response = response.json()
         print(response)
         if response['ok']:
@@ -178,9 +180,9 @@ def represent_ticket_by_concert_id():
 
     ticket = None
     if callback == 'next_ticket':
-        ticket = ticket_pagination.next()
+        ticket = ticket_pagination.next(external_id)
     if callback == 'previous_ticket':
-        ticket = ticket_pagination.prev()
+        ticket = ticket_pagination.prev(external_id)
 
     edit_message(external_id, message_id, ticket, ticket_markup)
     return {"ok": True}
@@ -210,7 +212,7 @@ def send_concerts_representation_message(chat_id, text, concerts, markup=None):
 def find_ticket_by_concert_id():
     external_id = session['external_id']
 
-    concert = concert_pagination.current()
+    concert = concert_pagination.current(external_id)
     response = {"ok": False}
     if concert:
         response = requests.get('http://127.0.0.1:80/concerts/' + str(concert.id) + '/tickets')
@@ -233,9 +235,9 @@ def represent_concerts():
 
     concert = None
     if callback == 'next_concert':
-        concert = concert_pagination.next()
+        concert = concert_pagination.next(chat_id)
     if callback == 'previous_concert':
-        concert = concert_pagination.prev()
+        concert = concert_pagination.prev(chat_id)
 
     edit_message(chat_id, message_id, concert, concert_markup)
     return {"ok": True}
@@ -267,7 +269,7 @@ def request_city_to_find_concert():
 @handler.message_handler(callback=['see_details'])
 def see_details():
     chat_id = session['message']["chat"]["id"]
-    send_message(chat_id, concert_pagination.current(), concert_markup)
+    send_message(chat_id, concert_pagination.current(chat_id), concert_markup)
 
 
 @handler.message_handler(message=['Ближайшие концерты'])
