@@ -1,5 +1,5 @@
 from datetime import datetime
-from userService import db
+from usersService import db
 
 
 class Permission(db.Model):

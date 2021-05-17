@@ -2,18 +2,18 @@ from flask import request, session
 import requests
 from random import randint
 
-from bot.dialog.dialog_bot import DialogBot
-from bot.dialog.registration_dialog import register_dialog
-from bot.updater import Updater
-from bot.markup import get_start_markup, ticket_markup, concert_markup
-from bot.models.concert import Concert
-from bot.models.ticket import Ticket
-from bot.models.user import User
-from bot.tg_massage_methods import send_message, edit_message, delete_message
-from bot import app
-from bot.message_handler import Handler
-from bot.models.concert_pagination import ConcertPagination
-from bot.models.ticket_pagination import TicketPagination
+from dialog.dialog_bot import DialogBot
+from dialog.registration_dialog import register_dialog
+from updater import Updater
+from markup import get_start_markup, ticket_markup, concert_markup
+from models.concert import Concert
+from models.ticket import Ticket
+from models.user import User
+from tg_massage_methods import send_message, edit_message, delete_message
+from . import app
+from message_handler import Handler
+from models.concert_pagination import ConcertPagination
+from models.ticket_pagination import TicketPagination
 
 handler = Handler()  # session
 updater = Updater([handler.send_message])

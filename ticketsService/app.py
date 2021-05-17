@@ -17,6 +17,11 @@ admin.add_view(ModelView(Sold, db.session))
 admin.add_view(ModelView(Type, db.session))
 
 
+@app.route("/", methods=["GET", "POST"])
+def index():
+    return jsonify('ticketsService')
+
+
 @app.route("/concerts", methods=["POST"])
 def create_concert():
     name = request.json['name']
@@ -161,7 +166,7 @@ def buy_ticket(concert_id):
         response = sold_tickets_db.create_sold_tickets(1, concert_id, request.json['user_id'],
                                                        tickets_type_name=request.json['type'])
     return jsonify({'ok': response['ok']})
-
-
-if __name__ == '__main__':
-    app.run(debug=True, port=80)
+#
+#
+# if __name__ == '__main__':
+#     app.run(debug=True, port=80)

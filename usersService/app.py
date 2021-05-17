@@ -4,9 +4,9 @@ from datetime import datetime
 from flask import request, jsonify
 from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
-from userService import app, db
-from userService.user_models import User, Permission
-import user_db
+from usersService import app, db
+from usersService.users_models import User, Permission
+import users_db
 
 
 admin = Admin(app)
@@ -16,7 +16,7 @@ admin.add_view(ModelView(Permission, db.session))
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    return jsonify('userService')
+    return jsonify('usersService')
 
 
 @app.route("/signup", methods=["POST"])
@@ -30,9 +30,9 @@ def signup():
     external_id = request.json.get('external_id')
     date = datetime.strptime(request.json.get('date'), '%d.%m.%Y')
 
-    response = user_db.create_user(permission_name=permission, password_hash=password_hash,
-                                   first_name=first_name, last_name=last_name, phone=phone,
-                                   external_id=external_id, date=date)
+    response = users_db.create_user(permission_name=permission, password_hash=password_hash,
+                                    first_name=first_name, last_name=last_name, phone=phone,
+                                    external_id=external_id, date=date)
 
     if response['ok']:
         response = dict(**response, **{'message': 'signup'})
@@ -46,7 +46,7 @@ def login():
     try:
         external_id = request.json['external_id']
         password_hash = request.json.get('password_hash')
-        response = user_db.read_user_by_external_id(external_id)
+        response = users_db.read_user_by_external_id(external_id)
 
         if response['ok']:
             user = response['user']
@@ -77,9 +77,9 @@ def login():
 @app.route("/user/<_id>", methods=["GET"])
 def get_user(_id):
     if 'chat_id' in request.json:
-        response = user_db.read_user_by_external_id(_id)
+        response = users_db.read_user_by_external_id(_id)
     else:
-        response = user_db.read_user(_id)
+        response = users_db.read_user(_id)
 
     if 'user' in response:
         response['user'] = response['user'].to_json()
@@ -94,5 +94,5 @@ def get_user(_id):
 #     return jsonify(response)
 
 
-if __name__ == '__main__':
-    app.run(debug=True, port=81)
+# if __name__ == '__main__':
+#     app.run(debug=True, port=81)

@@ -1,9 +1,9 @@
 import traceback
 from datetime import datetime
 
-from userService import app
-from userService import db
-from userService.user_models import User, Permission
+from usersService import app
+from usersService import db
+from usersService.users_models import User, Permission
 
 
 def read_user(_id):
