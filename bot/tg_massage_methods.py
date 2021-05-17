@@ -3,7 +3,7 @@ import requests
 from bot import app
 from bot.tg_models import Message
 
-token = "1783536914:AAGKrclSrCaPUZCsZt-8I3qiPmjIf24cCu0"
+
 url = f"https://api.telegram.org/bot{token}/"
 
 
