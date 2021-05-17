@@ -9,6 +9,7 @@ from ticketsService import sold_tickets_db
 from datetime import datetime
 from ticketsService.tickets_models import Concert, Tickets, Sold, Type
 
+
 admin = Admin(app)
 admin.add_view(ModelView(Concert, db.session))
 admin.add_view(ModelView(Tickets, db.session))
