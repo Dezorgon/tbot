@@ -1,4 +1,4 @@
-from bot.models.concert import Concert
+from bot.server_models.concert import Concert
 
 
 class ConcertPagination:

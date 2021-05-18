@@ -1,4 +1,4 @@
-from bot.models.ticket import Ticket
+from bot.server_models.ticket import Ticket
 
 
 class TicketPagination:

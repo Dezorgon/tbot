@@ -1,5 +1,5 @@
 from bot.markup import get_start_markup
-from bot.tg_models import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+from bot.telegram_models.tg_models import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
 
 
 def register_dialog():
