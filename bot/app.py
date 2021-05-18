@@ -55,10 +55,10 @@ def process_register_dialog(external_id, massage):
 
 @handler.message_handler(commands=['/start'])
 def process_start_command(external_id, massage):
-    if not login(external_id):
-        register()
+    if not login(external_id)['ok']:
+        register(external_id, massage)
     else:
-        process_help_command()
+        process_help_command(external_id, massage)
     return {"ok": True}
 
 
@@ -162,7 +162,7 @@ def buy_ticket(external_id, massage):
             send_message(external_id, 'Ну купил ты билет, а дальше то что?',
                          get_start_markup(True))
     else:
-        register()
+        register(external_id, massage)
 
     return {"ok": True}
 
