@@ -2,9 +2,9 @@ from flask import request
 import requests
 
 from bot.app import concert_pagination, handler
-from markup import concert_markup
-from models.concert import Concert
-from tg_massage_methods import send_message, edit_message, delete_message
+from bot.markup import concert_markup
+from bot.server_models.concert import Concert
+from bot.tg_massage_methods import send_message, edit_message, delete_message
 from bot import app
 
 

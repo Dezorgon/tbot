@@ -1,4 +1,7 @@
-from bot.telegram_models.tg_models import InlineKeyboardButton, InlineKeyboardMarkup, KeyboardButton, ReplyKeyboardMarkup
+from bot.telegram_models.tg_models import InlineKeyboardButton
+from bot.telegram_models.tg_models import InlineKeyboardMarkup
+from bot.telegram_models.tg_models import KeyboardButton
+from bot.telegram_models.tg_models import ReplyKeyboardMarkup
 
 b1 = InlineKeyboardButton('<', callback_data='previous_concert')
 b2 = InlineKeyboardButton('>', callback_data='next_concert')

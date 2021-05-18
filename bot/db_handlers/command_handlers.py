@@ -1,6 +1,7 @@
-from markup import get_start_markup
-from tg_massage_methods import send_message
-from app import handler
+from bot.db_handlers.login_handlers import login, register
+from bot.markup import get_start_markup
+from bot.tg_massage_methods import send_message
+from bot.app import handler
 
 
 @handler.message_handler(commands=['/start'])

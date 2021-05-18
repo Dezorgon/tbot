@@ -7,7 +7,7 @@ from updater import Updater
 from markup import get_start_markup
 from tg_massage_methods import send_message
 from bot import app
-from bot.db_handlers.message_handler import Handler
+from bot.message_handler import Handler
 from server_models.concert_pagination import ConcertPagination
 from server_models.ticket_pagination import TicketPagination
 
@@ -26,6 +26,7 @@ not_handled_answers = ['У меня вообще-то команды есть', 
 @app.route('/', methods=["GET", "POST"])
 def main():
     app.logger.debug('main')
+    app.logger.debug(request.json)
 
     if 'callback_query' in request.json:
         external_id = request.json["callback_query"]["from"]["id"]
@@ -41,25 +42,6 @@ def main():
         send_message(external_id, text, get_start_markup(True))
 
     return {'ok': True}
-
-
-
-
-
-
-
-
-# def re_register():
-#     external_id = request.json["callback_query"]["from"]["id"]
-#     app.logger.debug('re_register')
-#     updater.intercept_routing(external_id, process_register_dialog)
-#     process_register_dialog()
-#     return {"ok": True}
-
-
-
-
-
 
 
 # if __name__ == '__main__':

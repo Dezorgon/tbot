@@ -1,9 +1,9 @@
 import requests
 
 from bot.app import handler, updater, dialog
-from markup import get_start_markup
-from models.user import User
-from tg_massage_methods import send_message
+from bot.markup import get_start_markup
+from bot.server_models.user import User
+from bot.tg_massage_methods import send_message
 from bot import app
 
 

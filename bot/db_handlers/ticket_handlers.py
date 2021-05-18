@@ -2,10 +2,10 @@ from flask import request
 import requests
 
 from bot.app import handler, ticket_pagination, concert_pagination
-from bot.db_handlers.login_handlers import login
-from markup import get_start_markup, ticket_markup
-from models.ticket import Ticket
-from tg_massage_methods import send_message, edit_message, delete_message
+from bot.db_handlers.login_handlers import login, register
+from bot.markup import get_start_markup, ticket_markup
+from bot.server_models.ticket import Ticket
+from bot.tg_massage_methods import send_message, edit_message, delete_message
 from bot import app
 
 
