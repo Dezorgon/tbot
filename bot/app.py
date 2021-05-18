@@ -1,6 +1,7 @@
-from flask import request, session
+from flask import request
 import requests
 from random import randint
+import os
 
 from dialog.dialog_bot import DialogBot
 from dialog.registration_dialog import register_dialog
@@ -29,6 +30,7 @@ not_handled_answers = ['У меня вообще-то команды есть', 
                        'Чел ты', 'Мне кажется тебе не нужны билеты']
 
 
+
 @app.route('/', methods=["GET", "POST"])
 def main():
     app.logger.debug('main')
@@ -40,10 +42,7 @@ def main():
         external_id = request.json["message"]["from"]["id"]
         message = request.json["message"]
 
-    session['external_id'] = external_id
-    session['message'] = message
-
-    is_handled = updater.update(external_id)
+    is_handled = updater.update(external_id, message)
 
     if not is_handled:
         text = not_handled_answers[randint(0, len(not_handled_answers)-1)]
@@ -52,17 +51,14 @@ def main():
     return {'ok': True}
 
 
-def process_register_dialog():
-    external_id = session['external_id']
-    text = session['message']["text"]
+def process_register_dialog(external_id, massage):
+    text = massage["text"]
     dialog.handle_message(external_id, text)
 
 
 @handler.message_handler(commands=['/start'])
-def process_start_command():
-    external_id = session['external_id']
-
-    if not login(external_id):
+def process_start_command(external_id, massage):
+    if not login(external_id, massage):
         register()
     else:
         process_help_command()
@@ -70,23 +66,21 @@ def process_start_command():
 
 
 @handler.message_handler(commands=['/help'])
-def process_help_command():
-    external_id = session['external_id']
+def process_help_command(external_id, massage):
     send_message(external_id, "Здесь ты можешь купить билеты", get_start_markup(current_user.is_authenticated))
     return {"ok": True}
 
 
 @handler.message_handler(callback=['accept_register_data'])
-def input_registration_data():
-    external_id = session['external_id']
-    text = session['message']["text"].split()
+def input_registration_data(external_id, massage):
+    text = massage["text"].split()
 
     first_name = text[0]
     last_name = text[1]
     date = text[2]
     permission = 'user'
 
-    response = requests.post('http://127.0.0.1:81/signup',
+    response = requests.post(f'http://{os.environ["USERS_DB_HOST"]}:81/signup',
                              json={'first_name': first_name, 'last_name': last_name,
                                    'external_id': external_id, 'date': date,
                                    'permission': permission})
@@ -99,8 +93,8 @@ def input_registration_data():
         login(external_id)
 
 
-def login(external_id):
-    response = requests.post('http://127.0.0.1:81/login', json={'external_id': external_id})
+def login(external_id, massage):
+    response = requests.post(f'http://{os.environ["USERS_DB_HOST"]}:81/login', json={'external_id': external_id})
     response = response.json()
     app.logger.debug(response)
 
@@ -109,19 +103,17 @@ def login(external_id):
         current_user.set(user['id'], external_id, user['first_name'],
                          user['last_name'], user['date'], user['permission'])
 
-        send_message(external_id, None, get_start_markup(current_user.is_authenticated))
+        send_message(external_id, "Ок", get_start_markup(current_user.is_authenticated))
         return True
     else:
         return False
 
 
 @handler.message_handler(message=['Профиль'])
-def represent_profile():
-    external_id = session['external_id']
+def represent_profile(external_id, massage):
+    login(external_id, massage)
 
-    login(external_id)
-
-    response = requests.get('http://127.0.0.1:80/sold_tickets/' + str(external_id))
+    response = requests.get(f'http://{os.environ["TICKETS_DB_HOST"]}:80/sold_tickets/' + str(external_id))
     response = response.json()
 
     text = f'{current_user.last_name} {current_user.first_name}\n\nБилеты:\n'
@@ -135,11 +127,10 @@ def represent_profile():
 
 
 @handler.message_handler(message=['Регистрация'], callback=['re_register'])
-def register():
-    external_id = session['external_id']
+def register(external_id, massage):
     app.logger.debug('register')
     updater.intercept_routing(external_id, process_register_dialog)
-    process_register_dialog()
+    process_register_dialog(external_id, massage)
     return {"ok": True}
 
 
@@ -152,30 +143,27 @@ def register():
 
 
 @handler.message_handler(callback=['buy_ticket'])
-def buy_ticket():
-    external_id = session['external_id']
-
+def buy_ticket(external_id, massage):
     if not current_user.is_authenticated:
-        if not login(session['external_id']):
+        if not login(external_id, massage):
             register()
 
     if current_user.is_authenticated:
         data = {'user_id': external_id, 'type': ticket_pagination.current(external_id).type}
-        response = requests.post("http://127.0.0.1:80/concerts/" +
+        response = requests.post(f'http://{os.environ["TICKETS_DB_HOST"]}:80/concerts/' +
                                  str(concert_pagination.current(external_id).id) + "/buy", json=data)
         response = response.json()
         print(response)
         if response['ok']:
-            send_message(session['external_id'], 'Ну купил ты билет, а дальше то что?',
+            send_message(external_id, 'Ну купил ты билет, а дальше то что?',
                          get_start_markup(current_user.is_authenticated))
 
     return {"ok": True}
 
 
 @handler.message_handler(callback=['next_ticket', 'previous_ticket'])
-def represent_ticket_by_concert_id():
-    external_id = session['external_id']
-    message_id = session['message']["message_id"]
+def represent_ticket_by_concert_id(external_id, massage):
+    message_id = massage["message_id"]
     callback = request.json["callback_query"]["data"]
 
     ticket = None
@@ -209,13 +197,11 @@ def send_concerts_representation_message(chat_id, text, concerts, markup=None):
 
 
 @handler.message_handler(callback=['buy'])
-def find_ticket_by_concert_id():
-    external_id = session['external_id']
-
+def find_ticket_by_concert_id(external_id, massage):
     concert = concert_pagination.current(external_id)
     response = {"ok": False}
     if concert:
-        response = requests.get('http://127.0.0.1:80/concerts/' + str(concert.id) + '/tickets')
+        response = requests.get(f'http://{os.environ["TICKETS_DB_HOST"]}:80/concerts/' + str(concert.id) + '/tickets')
         response = response.json()
 
     if not response['ok']:
@@ -228,63 +214,57 @@ def find_ticket_by_concert_id():
 
 
 @handler.message_handler(callback=['next_concert', 'previous_concert'])
-def represent_concerts():
-    chat_id = session['message']["chat"]["id"]
-    message_id = session['message']["message_id"]
+def represent_concerts(external_id, massage):
+    message_id = massage["message_id"]
     callback = request.json["callback_query"]["data"]
 
     concert = None
     if callback == 'next_concert':
-        concert = concert_pagination.next(chat_id)
+        concert = concert_pagination.next(external_id)
     if callback == 'previous_concert':
-        concert = concert_pagination.prev(chat_id)
+        concert = concert_pagination.prev(external_id)
 
-    edit_message(chat_id, message_id, concert, concert_markup)
+    edit_message(external_id, message_id, concert, concert_markup)
     return {"ok": True}
 
 
-def find_concert_by_city():
-    chat_id = session['message']["chat"]["id"]
-    city = session['message']["text"]
+def find_concert_by_city(external_id, massage):
+    city = massage["text"]
 
-    response = requests.get('http://127.0.0.1:80/concerts/' + city)
+    response = requests.get(f'http://{os.environ["TICKETS_DB_HOST"]}:80/concerts/' + city)
     response = response.json()
 
     if not response['ok']:
-        send_concerts_representation_message(chat_id, "Я не нашел концертов в этом городе", [])
+        send_concerts_representation_message(external_id, "Я не нашел концертов в этом городе", [])
         return {"ok": False}
 
-    send_concerts_representation_message(chat_id, str(Concert(response['concerts'][0])),
+    send_concerts_representation_message(external_id, str(Concert(response['concerts'][0])),
                                          response['concerts'], concert_markup)
     return {"ok": True}
 
 
 @handler.message_handler(message=['Посмотреть концерты в моем городе'], next_func=find_concert_by_city)
-def request_city_to_find_concert():
-    chat_id = session['message']["chat"]["id"]
-    send_message(chat_id, "В каком городе будем искать?")
+def request_city_to_find_concert(external_id, massage):
+    send_message(external_id, "В каком городе будем искать?")
     return {"ok": True}
 
 
 @handler.message_handler(callback=['see_details'])
-def see_details():
-    chat_id = session['message']["chat"]["id"]
-    send_message(chat_id, concert_pagination.current(chat_id), concert_markup)
+def see_details(external_id, massage):
+    send_message(external_id, concert_pagination.current(external_id), concert_markup)
 
 
 @handler.message_handler(message=['Ближайшие концерты'])
-def get_top_concerts():
-    chat_id = session['message']["chat"]["id"]
-
-    response = requests.get('http://127.0.0.1:80/concerts/top/' + str(10))
+def get_top_concerts(external_id, massage):
+    response = requests.get(f'http://{os.environ["TICKETS_DB_HOST"]}:80/concerts/top/' + str(10))
     response = response.json()
     app.logger.debug(response)
 
     if not response['ok']:
-        send_concerts_representation_message(chat_id, "Хм, нет концертов?", [])
+        send_concerts_representation_message(external_id, "Хм, нет концертов?", [])
         return {"ok": False}
 
-    send_concerts_representation_message(chat_id, str(Concert(response['concerts'][0])),
+    send_concerts_representation_message(external_id, str(Concert(response['concerts'][0])),
                                          response['concerts'], concert_markup)
     return {"ok": True}
 
