@@ -10,8 +10,12 @@ services:
       context: .
       dockerfile: DockerfileBot
     restart: always
+    ports:
+      - 0.0.0.0:5000:5000
     environment:
       FLASK_ENV: development
+      TICKETS_DB_HOST: tickets_db
+      USERS_DB_HOST: users_db
     depends_on:
       - tickets_db
       - users_db

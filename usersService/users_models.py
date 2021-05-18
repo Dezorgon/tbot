@@ -18,7 +18,7 @@ class User(db.Model):
 
     permission_id = db.Column(db.Integer, db.ForeignKey('permission.id'))
     permission = db.relationship('Permission', lazy=True)
-    external_id = db.Column(db.String(64), nullable=False)#, unique=True)
+    external_id = db.Column(db.String(64), nullable=False, unique=True)
     password_hash = db.Column(db.String(128))
     first_name = db.Column(db.String(128))
     last_name = db.Column(db.String(128))

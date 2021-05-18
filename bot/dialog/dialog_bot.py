@@ -4,7 +4,7 @@ import requests
 from bot import updater
 from bot.tg_models import Message
 
-
+token = '1801411028:AAE0FzT5Ntxm0o2jMNACLcKXMlaOkz0r5nU'
 url = f"https://api.telegram.org/bot{token}/"
 
 

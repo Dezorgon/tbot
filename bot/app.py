@@ -1,6 +1,7 @@
 from flask import request, session
 import requests
 from random import randint
+import os
 
 from dialog.dialog_bot import DialogBot
 from dialog.registration_dialog import register_dialog
@@ -86,7 +87,7 @@ def input_registration_data():
     date = text[2]
     permission = 'user'
 
-    response = requests.post('http://127.0.0.1:81/signup',
+    response = requests.post(f'http://{os.environ["USERS_DB_HOST"]}:81/signup',
                              json={'first_name': first_name, 'last_name': last_name,
                                    'external_id': external_id, 'date': date,
                                    'permission': permission})
@@ -100,7 +101,7 @@ def input_registration_data():
 
 
 def login(external_id):
-    response = requests.post('http://127.0.0.1:81/login', json={'external_id': external_id})
+    response = requests.post(f'http://{os.environ["USERS_DB_HOST"]}:81/login', json={'external_id': external_id})
     response = response.json()
     app.logger.debug(response)
 
@@ -109,7 +110,7 @@ def login(external_id):
         current_user.set(user['id'], external_id, user['first_name'],
                          user['last_name'], user['date'], user['permission'])
 
-        send_message(external_id, None, get_start_markup(current_user.is_authenticated))
+        send_message(external_id, "Ок", get_start_markup(current_user.is_authenticated))
         return True
     else:
         return False
@@ -121,7 +122,7 @@ def represent_profile():
 
     login(external_id)
 
-    response = requests.get('http://127.0.0.1:80/sold_tickets/' + str(external_id))
+    response = requests.get(f'http://{os.environ["TICKETS_DB_HOST"]}:80/sold_tickets/' + str(external_id))
     response = response.json()
 
     text = f'{current_user.last_name} {current_user.first_name}\n\nБилеты:\n'
@@ -161,7 +162,7 @@ def buy_ticket():
 
     if current_user.is_authenticated:
         data = {'user_id': external_id, 'type': ticket_pagination.current(external_id).type}
-        response = requests.post("http://127.0.0.1:80/concerts/" +
+        response = requests.post(f'http://{os.environ["TICKETS_DB_HOST"]}:80/concerts/' +
                                  str(concert_pagination.current(external_id).id) + "/buy", json=data)
         response = response.json()
         print(response)
@@ -215,7 +216,7 @@ def find_ticket_by_concert_id():
     concert = concert_pagination.current(external_id)
     response = {"ok": False}
     if concert:
-        response = requests.get('http://127.0.0.1:80/concerts/' + str(concert.id) + '/tickets')
+        response = requests.get(f'http://{os.environ["TICKETS_DB_HOST"]}:80/concerts/' + str(concert.id) + '/tickets')
         response = response.json()
 
     if not response['ok']:
@@ -247,7 +248,7 @@ def find_concert_by_city():
     chat_id = session['message']["chat"]["id"]
     city = session['message']["text"]
 
-    response = requests.get('http://127.0.0.1:80/concerts/' + city)
+    response = requests.get(f'http://{os.environ["TICKETS_DB_HOST"]}:80/concerts/' + city)
     response = response.json()
 
     if not response['ok']:
@@ -276,7 +277,7 @@ def see_details():
 def get_top_concerts():
     chat_id = session['message']["chat"]["id"]
 
-    response = requests.get('http://127.0.0.1:80/concerts/top/' + str(10))
+    response = requests.get(f'http://{os.environ["TICKETS_DB_HOST"]}:80/concerts/top/' + str(10))
     response = response.json()
     app.logger.debug(response)
 
