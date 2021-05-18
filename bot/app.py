@@ -261,13 +261,7 @@ def see_details(external_id, massage):
 
 
 @handler.message_handler(message=['Ближайшие концерты'])
-<<<<<<< HEAD
-def get_top_concerts():
-    chat_id = session['message']["chat"]["id"]
-
-=======
 def get_top_concerts(external_id, massage):
->>>>>>> 47d0867969374870d01c651bea96cb7923baace1
     response = requests.get(f'http://{os.environ["TICKETS_DB_HOST"]}:80/concerts/top/' + str(10))
     response = response.json()
     app.logger.debug(response)
@@ -281,5 +275,5 @@ def get_top_concerts(external_id, massage):
     return {"ok": True}
 
 
-if __name__ == '__main__':
-    app.run(debug=True)
+# if __name__ == '__main__':
+#     app.run(debug=True)
