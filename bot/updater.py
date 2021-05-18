@@ -9,7 +9,7 @@ class Updater:
     def free_routing(self, user_id):
         del self.interceptors[user_id]
 
-    def update(self, user_id) -> bool:
+    def update(self, user_id, message) -> bool:
         is_invoked = False
 
         if user_id in self.interceptors:
@@ -17,7 +17,7 @@ class Updater:
             is_invoked = True
         else:
             for h in self.handlers:
-                response = h()
+                response = h(user_id, message)
                 if not is_invoked and response['is_invoked']:
                     is_invoked = True
 
