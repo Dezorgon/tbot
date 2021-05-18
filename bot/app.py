@@ -11,7 +11,7 @@ from models.concert import Concert
 from models.ticket import Ticket
 from models.user import User
 from tg_massage_methods import send_message, edit_message, delete_message
-from . import app
+from bot import app
 from message_handler import Handler
 from models.concert_pagination import ConcertPagination
 from models.ticket_pagination import TicketPagination
@@ -24,11 +24,8 @@ dialog = DialogBot(register_dialog, updater)
 concert_pagination = ConcertPagination()
 ticket_pagination = TicketPagination()
 
-current_user = User()
-
 not_handled_answers = ['У меня вообще-то команды есть', 'Что с тобой не так?',
                        'Чел ты', 'Мне кажется тебе не нужны билеты']
-
 
 
 @app.route('/', methods=["GET", "POST"])
@@ -58,7 +55,7 @@ def process_register_dialog(external_id, massage):
 
 @handler.message_handler(commands=['/start'])
 def process_start_command(external_id, massage):
-    if not login(external_id, massage):
+    if not login(external_id):
         register()
     else:
         process_help_command()
@@ -67,7 +64,7 @@ def process_start_command(external_id, massage):
 
 @handler.message_handler(commands=['/help'])
 def process_help_command(external_id, massage):
-    send_message(external_id, "Здесь ты можешь купить билеты", get_start_markup(current_user.is_authenticated))
+    send_message(external_id, "Здесь ты можешь купить билеты", get_start_markup(login(external_id)['ok']))
     return {"ok": True}
 
 
@@ -90,40 +87,46 @@ def input_registration_data(external_id, massage):
         send_message(external_id, "Что-то пошло не так")
         register()
     else:
-        login(external_id)
+        if login(external_id)['ok']:
+            send_message(external_id, "Ок", get_start_markup(True))
 
 
-def login(external_id, massage):
+def login(external_id):
     response = requests.post(f'http://{os.environ["USERS_DB_HOST"]}:81/login', json={'external_id': external_id})
     response = response.json()
     app.logger.debug(response)
 
     if response['ok']:
         user = response['user']
-        current_user.set(user['id'], external_id, user['first_name'],
-                         user['last_name'], user['date'], user['permission'])
-
-        send_message(external_id, "Ок", get_start_markup(current_user.is_authenticated))
-        return True
+        user = User(user['id'], external_id, user['first_name'],
+                    user['last_name'], user['date'], user['permission'])
+        return {'ok': True, 'user': user}
     else:
-        return False
+        return {'ok': False}
 
 
 @handler.message_handler(message=['Профиль'])
 def represent_profile(external_id, massage):
-    login(external_id, massage)
+    login(external_id)
 
     response = requests.get(f'http://{os.environ["TICKETS_DB_HOST"]}:80/sold_tickets/' + str(external_id))
     response = response.json()
 
-    text = f'{current_user.last_name} {current_user.first_name}\n\nБилеты:\n'
-    if response['ok']:
-        sold_tickets = response['sold_tickets']
-        for ticket in sold_tickets:
-            text += f'{ticket["concert"]} {ticket["type"]} {ticket["count"]}шт\n'
-    send_message(external_id, text)
+    user_db_response = login(external_id)
+    if user_db_response['ok']:
+        user = user_db_response['user']
 
-    return {"ok": True}
+        text = f'{user.last_name} {user.first_name}\n\nБилеты:\n'
+        if response['ok']:
+            sold_tickets = response['sold_tickets']
+            for ticket in sold_tickets:
+                text += f'{ticket["concert"]} {ticket["type"]} {ticket["count"]}шт\n'
+        send_message(external_id, text)
+
+        return {"ok": True}
+
+    send_message(external_id, "Зарегистрируйтесь", get_start_markup(False))
+    return {"ok": False}
 
 
 @handler.message_handler(message=['Регистрация'], callback=['re_register'])
@@ -144,19 +147,22 @@ def register(external_id, massage):
 
 @handler.message_handler(callback=['buy_ticket'])
 def buy_ticket(external_id, massage):
-    if not current_user.is_authenticated:
-        if not login(external_id, massage):
-            register()
+    user_db_response = login(external_id)
+    if user_db_response['ok']:
+        user = user_db_response['user']
+        assert user.external_id == external_id
 
-    if current_user.is_authenticated:
         data = {'user_id': external_id, 'type': ticket_pagination.current(external_id).type}
         response = requests.post(f'http://{os.environ["TICKETS_DB_HOST"]}:80/concerts/' +
                                  str(concert_pagination.current(external_id).id) + "/buy", json=data)
         response = response.json()
-        print(response)
+        app.logger.debug(response)
+
         if response['ok']:
             send_message(external_id, 'Ну купил ты билет, а дальше то что?',
-                         get_start_markup(current_user.is_authenticated))
+                         get_start_markup(True))
+    else:
+        register()
 
     return {"ok": True}
 

@@ -6,7 +6,7 @@ from bot import app
 class Handler:
     functions = {'message': [], 'regex': [], 'command': [], "callback": []}
     next_functions = {}
-    next_function = None
+    next_function = {}
 
     def message_handler(self, message: [str] = None, regex=None, commands: [str] = None,
                         callback: [str] = None, next_func=None):
@@ -34,36 +34,36 @@ class Handler:
 
         return decorator
 
-    def send_message(self):
+    def send_message(self, external_id, message):
         app.logger.debug(request.json)
         func_to_invoke = None
-        if self.next_function:
+        if external_id in self.next_function:
             app.logger.debug('next func invoke')
-            func_to_invoke = self.next_function
-            self.next_function = None
+            func_to_invoke = self.next_function[external_id]
+            del self.next_function[external_id]
         else:
             if "message" in request.json:
                 msg = request.json["message"]["text"]
-                func_to_invoke = self.find_function(msg, 'command')
+                func_to_invoke = self.find_function(msg, 'command', external_id)
                 if func_to_invoke is None:
-                    func_to_invoke = self.find_function(msg, 'message')
+                    func_to_invoke = self.find_function(msg, 'message', external_id)
 
             if "callback_query" in request.json:
                 callback = request.json["callback_query"]["data"]
-                func_to_invoke = self.find_function(callback, 'callback')
+                func_to_invoke = self.find_function(callback, 'callback', external_id)
 
         if func_to_invoke:
-            func_to_invoke()
+            func_to_invoke(external_id, message)
             return {"is_invoked": True}
 
         return {"is_invoked": False}
 
-    def find_function(self, route, type_of_route):
+    def find_function(self, route, type_of_route, external_id):
         for d in self.functions[type_of_route]:
             if route in d:
                 func = d[route]
                 if func in self.next_functions:
                     app.logger.debug('next func set')
-                    self.next_function = self.next_functions[func]
+                    self.next_function[external_id] = self.next_functions[func]
                 return func
         return None
