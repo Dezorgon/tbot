@@ -16,7 +16,7 @@ def input_registration_data(external_id, massage):
     date = text[2]
     permission = 'user'
 
-    response = requests.post(app.config['USER_DB_URL'] + 'signup',
+    response = requests.post(app.config['USERS_DB_URL'] + 'signup',
                              json={'first_name': first_name, 'last_name': last_name,
                                    'external_id': external_id, 'date': date,
                                    'permission': permission})
@@ -31,7 +31,7 @@ def input_registration_data(external_id, massage):
 
 
 def login(external_id):
-    response = requests.post(app.config['USER_DB_URL']+'login', json={'external_id': external_id})
+    response = requests.post(app.config['USERS_DB_URL']+'login', json={'external_id': external_id})
     response = response.json()
     app.logger.debug(response)
 

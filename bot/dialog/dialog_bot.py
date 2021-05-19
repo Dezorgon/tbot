@@ -6,7 +6,6 @@ from bot.tg_massage_methods import send_message
 class DialogBot(object):
     def __init__(self, generator):
         self.handlers = collections.defaultdict(generator)
-        self.input_data = collections.defaultdict(list)
 
     def handle_message(self, chat_id, input_text, restart=False):
         if restart:
@@ -27,8 +26,6 @@ class DialogBot(object):
         if not isinstance(answer, str):
             text = answer[0]
             reply_markup = answer[1]
-            if len(answer) > 2 and answer[2]:
-                self.input_data[chat_id].append(input_text)
 
         send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
         return False

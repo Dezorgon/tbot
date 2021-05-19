@@ -86,13 +86,12 @@ def get_user(_id):
     return jsonify(response)
 
 
-# @app.route("/user/chat_id/<chat_id>", methods=["GET"])
-# def get_user_by_chat_id(chat_id):
-#     response = user_db.read_user_by_chat_id(chat_id)
-#     if 'user' in response:
-#         response['user'] = response['user'].to_json()
-#     return jsonify(response)
+@app.route("/user", methods=["GET"])
+def get_users():
+    response = users_db.read_users()
 
+    if 'users' in response:
+        for i in range(len(response['users'])):
+            response['users'][i] = response['users'][i].to_json()
+    return jsonify(response)
 
-# if __name__ == '__main__':
-#     app.run(debug=True, port=81)

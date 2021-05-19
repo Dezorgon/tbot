@@ -14,6 +14,13 @@ def read_user(_id):
     return {'ok': False}
 
 
+def read_users():
+    users = User.query.all()
+    if users:
+        return {'ok': True, 'users': users}
+    return {'ok': False}
+
+
 def read_user_by_external_id(external_id):
     if external_id:
         user = User.query.filter_by(external_id=external_id).first()
