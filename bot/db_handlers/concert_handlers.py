@@ -1,11 +1,11 @@
 from flask import request
 import requests
 
-from bot.app import concert_pagination, handler
+from bot import concert_pagination
 from bot.markup import concert_markup
 from bot.server_models.concert import Concert
-from bot.tg_massage_methods import send_message, edit_message, delete_message
-from bot import app
+from bot.db_handlers.tg_massage_methods import send_message, edit_message, delete_message
+from bot import app, handler
 
 
 @handler.message_handler(callback=['next_concert', 'previous_concert'])

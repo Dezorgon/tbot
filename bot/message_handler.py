@@ -1,7 +1,5 @@
 from flask import request
 
-from bot import app
-
 
 class Handler:
     functions = {'message': [], 'regex': [], 'command': [], "callback": []}
@@ -13,7 +11,6 @@ class Handler:
         def decorator(func):
 
             if next_func:
-                app.logger.debug('next func init')
                 self.next_functions[func] = next_func
             if message:
                 for m in message:
@@ -37,7 +34,6 @@ class Handler:
     def send_message(self, external_id, message):
         func_to_invoke = None
         if external_id in self.next_function:
-            app.logger.debug('next func invoke')
             func_to_invoke = self.next_function[external_id]
             del self.next_function[external_id]
         else:
@@ -62,7 +58,6 @@ class Handler:
             if route in d:
                 func = d[route]
                 if func in self.next_functions:
-                    app.logger.debug('next func set')
                     self.next_function[external_id] = self.next_functions[func]
                 return func
         return None

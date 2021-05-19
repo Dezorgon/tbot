@@ -1,31 +1,19 @@
 from flask import request
 from random import randint
 
-from dialog.dialog_bot import DialogBot
-from dialog.registration_dialog import register_dialog
-from updater import Updater
 from markup import get_start_markup
-from tg_massage_methods import send_message
-from bot import app
-from bot.message_handler import Handler
-from server_models.concert_pagination import ConcertPagination
-from server_models.ticket_pagination import TicketPagination
+from bot.db_handlers.tg_massage_methods import send_message
+from bot import app, updater, not_handled_answers
 
-handler = Handler()  # session
-updater = Updater([handler.send_message])
 
-dialog = DialogBot(register_dialog, updater)
-
-concert_pagination = ConcertPagination()
-ticket_pagination = TicketPagination()
-
-not_handled_answers = ['У меня вообще-то команды есть', 'Что с тобой не так?',
-                       'Чел ты', 'Мне кажется тебе не нужны билеты']
+from db_handlers.command_handlers import *
+from db_handlers.concert_handlers import *
+from db_handlers.login_handlers import *
+from db_handlers.ticket_handlers import *
 
 
 @app.route('/', methods=["GET", "POST"])
 def main():
-    app.logger.debug('main')
     app.logger.debug(request.json)
 
     if 'callback_query' in request.json:
@@ -38,11 +26,8 @@ def main():
     is_handled = updater.update(external_id, message)
 
     if not is_handled:
+        app.logger.debug('not_handled')
         text = not_handled_answers[randint(0, len(not_handled_answers)-1)]
         send_message(external_id, text, get_start_markup(True))
 
     return {'ok': True}
-
-
-# if __name__ == '__main__':
-#     app.run(debug=True)

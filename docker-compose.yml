@@ -15,7 +15,10 @@ services:
     environment:
       FLASK_ENV: development
       TICKETS_DB_HOST: tickets_db
+      TICKETS_DB_PORT: 80
       USERS_DB_HOST: users_db
+      USERS_DB_PORT: 81
+      TOKEN: "1801411028:AAE0FzT5Ntxm0o2jMNACLcKXMlaOkz0r5nU"
     depends_on:
       - tickets_db
       - users_db

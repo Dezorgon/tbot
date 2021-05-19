@@ -1,10 +1,10 @@
 import requests
 
-from bot.app import handler, updater, dialog
+from bot import dialog
 from bot.markup import get_start_markup
 from bot.server_models.user import User
-from bot.tg_massage_methods import send_message
-from bot import app
+from bot.db_handlers.tg_massage_methods import send_message
+from bot import app, handler, updater
 
 
 @handler.message_handler(callback=['accept_register_data'])
