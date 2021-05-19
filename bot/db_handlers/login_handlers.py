@@ -3,7 +3,7 @@ import requests
 from bot import dialog
 from bot.markup import get_start_markup
 from bot.server_models.user import User
-from bot.db_handlers.tg_massage_methods import send_message
+from bot.tg_massage_methods import send_message
 from bot import app, handler, updater
 
 

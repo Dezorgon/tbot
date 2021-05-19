@@ -1,6 +1,6 @@
 from bot.db_handlers.login_handlers import login, register
 from bot.markup import get_start_markup
-from bot.db_handlers.tg_massage_methods import send_message
+from bot.tg_massage_methods import send_message
 from bot import handler
 
 

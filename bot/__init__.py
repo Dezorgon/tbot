@@ -1,4 +1,5 @@
 from flask import Flask
+import logging
 
 from bot.dialog.dialog_bot import DialogBot
 from bot.dialog.registration_dialog import register_dialog
@@ -9,12 +10,11 @@ from bot.updater import Updater
 
 app = Flask(__name__)
 app.config.from_pyfile('config.py')
+logging.basicConfig(level=getattr(logging, app.config['LOGGING_LEVEL']),
+                    format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
 
 handler = Handler()
 updater = Updater([handler.send_message])
 dialog = DialogBot(register_dialog)
 concert_pagination = ConcertPagination()
 ticket_pagination = TicketPagination()
-
-not_handled_answers = ['У меня вообще-то команды есть', 'Что с тобой не так?',
-                       'Чел ты', 'Мне кажется тебе не нужны билеты']

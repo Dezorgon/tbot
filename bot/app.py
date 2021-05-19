@@ -1,15 +1,14 @@
-from flask import request
 from random import randint
-
-from markup import get_start_markup
-from bot.db_handlers.tg_massage_methods import send_message
-from bot import app, updater, not_handled_answers
 
 
 from db_handlers.command_handlers import *
 from db_handlers.concert_handlers import *
 from db_handlers.login_handlers import *
 from db_handlers.ticket_handlers import *
+
+
+not_handled_answers = ['У меня вообще-то команды есть', 'Что с тобой не так?',
+                       'Чел ты', 'Мне кажется тебе не нужны билеты']
 
 
 @app.route('/', methods=["GET", "POST"])

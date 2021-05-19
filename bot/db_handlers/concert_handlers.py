@@ -4,7 +4,7 @@ import requests
 from bot import concert_pagination
 from bot.markup import concert_markup
 from bot.server_models.concert import Concert
-from bot.db_handlers.tg_massage_methods import send_message, edit_message, delete_message
+from bot.tg_massage_methods import send_message, edit_message, delete_message
 from bot import app, handler
 
 

@@ -1,10 +1,6 @@
 import collections
-import requests
 
-from bot.telegram_models.tg_models import Message
-
-token = '1801411028:AAE0FzT5Ntxm0o2jMNACLcKXMlaOkz0r5nU'
-url = f"https://api.telegram.org/bot{token}/"
+from bot.tg_massage_methods import send_message
 
 
 class DialogBot(object):
@@ -36,10 +32,3 @@ class DialogBot(object):
 
         send_message(chat_id=chat_id, text=text, reply_markup=reply_markup)
         return False
-
-
-def send_message(chat_id, text, reply_markup=None):
-    method = "sendMessage"
-    m = Message(chat_id, text, reply_markup=reply_markup)
-    data = m.to_json()
-    requests.post(url + method, data=data)

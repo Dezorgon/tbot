@@ -5,7 +5,7 @@ from bot import ticket_pagination, concert_pagination
 from bot.db_handlers.login_handlers import login, register
 from bot.markup import get_start_markup, ticket_markup
 from bot.server_models.ticket import Ticket
-from bot.db_handlers.tg_massage_methods import send_message, edit_message, delete_message
+from bot.tg_massage_methods import send_message, edit_message, delete_message
 from bot import app, handler
 
 
