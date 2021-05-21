@@ -8,10 +8,17 @@ from bot.server_models.concert_pagination import ConcertPagination
 from bot.server_models.ticket_pagination import TicketPagination
 from bot.updater import Updater
 
-app = Flask(__name__)
-app.config.from_pyfile('config.py')
-logging.basicConfig(level=getattr(logging, app.config['LOGGING_LEVEL']),
-                    format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+
+def create_app(config):
+    app = Flask(__name__)
+    app.config.from_pyfile(config)
+    logging.basicConfig(level=getattr(logging, app.config['LOGGING_LEVEL']),
+                        format='%(asctime)s %(levelname)s %(name)s %(threadName)s : %(message)s')
+    return app
+
+
+app = create_app('test_config.py')
+token = app.config['TOKEN']
 
 handler = Handler()
 updater = Updater([handler.send_message])

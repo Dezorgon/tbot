@@ -3,7 +3,8 @@ import os
 
 from bot.telegram_models.tg_models import Message
 
-token = os.environ['TOKEN']
+# token = os.environ['TOKEN']
+token = '1801411028:AAE0FzT5Ntxm0o2jMNACLcKXMlaOkz0r5nU'
 url = f"https://api.telegram.org/bot{token}/"
 
 

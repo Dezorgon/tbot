@@ -4,22 +4,27 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 
 
-USER = 'root'
-PASSWORD = 'password'
-HOST = os.environ['MYSQL_HOST']
-DATABASE = os.environ['MYSQL_DATABASE']
+def create_app(config):
+    app = Flask(__name__)
+    app.config.from_pyfile(config)
+    return app
 
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = f'mysql+mysqlconnector://{USER}:{PASSWORD}@{HOST}/{DATABASE}'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = 'the random string bla bla'
-db = SQLAlchemy(app)
 
-url = 'mysql+mysqlconnector://%s:%s@%s' % (USER, PASSWORD, HOST)
-engine = db.create_engine(url, {})
+def create_db(app):
+    db = SQLAlchemy(app)
 
-create_str = "CREATE DATABASE IF NOT EXISTS %s ;" % (DATABASE)
-engine.execute(create_str)
-engine.execute(f"USE {DATABASE};")
-db.create_all()
-db.session.commit()
+    db_name = app.config['DATABASE']
+
+    engine = db.create_engine(app.config['SQLALCHEMY_DATABASE_URI'], {})
+
+    create_str = "CREATE DATABASE IF NOT EXISTS %s ;" % db_name
+    engine.execute(create_str)
+    engine.execute(f"USE {db_name};")
+    db.create_all()
+    db.session.commit()
+
+    return db
+
+
+app = create_app('test_config.py')
+db = create_db(app)

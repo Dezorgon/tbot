@@ -1,11 +1,10 @@
 from random import randint
 
-
-from db_handlers.command_handlers import *
-from db_handlers.concert_handlers import *
-from db_handlers.login_handlers import *
-from db_handlers.ticket_handlers import *
-from db_handlers.admin_handlers import *
+from bot.db_handlers.command_handlers import *
+from bot.db_handlers.concert_handlers import *
+from bot.db_handlers.login_handlers import *
+from bot.db_handlers.ticket_handlers import *
+from bot.db_handlers.admin_handlers import *
 
 
 not_handled_answers = ['У меня вообще-то команды есть', 'Что с тобой не так?',
