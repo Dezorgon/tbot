@@ -19,18 +19,20 @@ def input_notification(external_id, massage):
     else:
         return {"ok": False}
 
+    massages = []
     for i in indices:
-        send_message(i, text)
+        ret = send_message(i, text)
+        massages.append(ret)
 
-    return {"ok": True}
+    return {"ok": True, "massages": massages}
 
 
 @handler.message_handler(commands=['/notify'], next_func=input_notification)
 def notify(external_id, massage):
     response = login(external_id)
     if response['ok'] and response['user'].permission == 'admin':
-        send_message(external_id, "Что отправим этим плебеям?")
+        massage = send_message(external_id, "Что отправим этим плебеям?")
     else:
-        send_message(external_id, "Эта команда для вас недоступна")
+        massage = send_message(external_id, "Эта команда для вас недоступна")
 
-    return {"ok": True}
+    return {"ok": True, "massage": massage}

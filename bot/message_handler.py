@@ -48,8 +48,8 @@ class Handler:
                 func_to_invoke = self.find_function(callback, 'callback', external_id)
 
         if func_to_invoke:
-            func_to_invoke(external_id, message)
-            return {"is_invoked": True}
+            response = func_to_invoke(external_id, message)
+            return {"is_invoked": True, "response": response}
 
         return {"is_invoked": False}
 

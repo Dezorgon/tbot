@@ -20,10 +20,10 @@ def edit_message(chat_id, message_id, text, reply_markup=None):
     m = Message(chat_id, text, reply_markup=reply_markup)
     data = m.to_json()
     data['message_id'] = message_id
-    requests.post(url + method, data=data)
+    response = requests.post(url + method, data=data)
 
 
 def delete_message(chat_id, message_id):
     method = "deleteMessage"
     data = {'chat_id': chat_id, 'message_id': message_id}
-    requests.post(url + method, data=data)
+    response = requests.post(url + method, data=data)
