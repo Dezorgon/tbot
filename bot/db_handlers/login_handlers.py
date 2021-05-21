@@ -70,9 +70,13 @@ def represent_profile(external_id, massage):
 
 @handler.message_handler(message=['Регистрация'], callback=['re_register'])
 def register(external_id, massage):
-    app.logger.debug('register')
-    updater.intercept_routing(external_id, process_register_dialog)
-    process_register_dialog(external_id, massage)
+    response = login(external_id)
+    if not response['ok']:
+        app.logger.debug('register')
+        updater.intercept_routing(external_id, process_register_dialog)
+        process_register_dialog(external_id, massage)
+    else:
+        send_message(external_id, "Братик, да ты уже зарегистрирован", get_start_markup(True))
     return {"ok": True}
 
 
