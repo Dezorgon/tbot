@@ -15,5 +15,6 @@ def process_start_command(external_id, massage):
 
 @handler.message_handler(commands=['/help'])
 def process_help_command(external_id, massage):
+    send_message(external_id, "Привет")
     send_message(external_id, "Здесь ты можешь купить билеты", get_start_markup(login(external_id)['ok']))
     return {"ok": True}
