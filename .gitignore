@@ -5,3 +5,4 @@ venv/
 main.py
 */1.py
 *.json
+*.txt

@@ -34,6 +34,7 @@ def signup():
                                     first_name=first_name, last_name=last_name, phone=phone,
                                     external_id=external_id, date=date)
 
+    app.logger.info(response)
     if response['ok']:
         response = dict(**response, **{'message': 'signup'})
 

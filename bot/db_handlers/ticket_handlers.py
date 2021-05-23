@@ -11,10 +11,17 @@ from bot import app, handler
 
 @handler.message_handler(callback=['buy_ticket'])
 def buy_ticket(external_id, massage):
+    message_id = massage["message_id"]
+
     user_db_response = login(external_id)
     if user_db_response['ok']:
         user = user_db_response['user']
         assert user.external_id == external_id
+
+        if ticket_pagination.current(external_id).left <= 0:
+            send_message(external_id, 'А все, а надо было раньше',
+                         get_start_markup(True))
+            return {"ok": False}
 
         data = {'user_id': external_id, 'type': ticket_pagination.current(external_id).type}
         response = requests.post(app.config['TICKETS_DB_URL'] + 'concerts/' +
@@ -23,6 +30,8 @@ def buy_ticket(external_id, massage):
         app.logger.debug(response)
 
         if response['ok']:
+            ticket_pagination.current(external_id).left -= 1
+            edit_message(external_id, message_id, ticket_pagination.current(external_id), ticket_markup)
             send_message(external_id, 'Ну купил ты билет, а дальше то что?',
                          get_start_markup(True))
     else:

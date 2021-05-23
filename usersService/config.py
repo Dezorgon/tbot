@@ -9,5 +9,3 @@ PASSWORD = 'password'
 HOST = os.environ['MYSQL_HOST']
 DATABASE = os.environ['MYSQL_DATABASE']
 SQLALCHEMY_DATABASE_URI = f'mysql+mysqlconnector://{USER}:{PASSWORD}@{HOST}/{DATABASE}'
-
-LOGGING_LEVEL = os.environ["LOGGING_LEVEL"]

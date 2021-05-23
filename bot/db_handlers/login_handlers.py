@@ -1,4 +1,5 @@
 import requests
+from datetime import datetime
 
 from bot import dialog
 from bot.markup import get_start_markup
@@ -13,7 +14,12 @@ def input_registration_data(external_id, massage):
 
     first_name = text[0]
     last_name = text[1]
-    date = text[2]
+    try:
+        date = datetime.strptime('%d.%m.%Y', text[2]).strftime('%d.%m.%Y')
+    except:
+        send_message(external_id, "Напиши дату нормально")
+        return
+
     permission = 'user'
 
     response = requests.post(app.config['USERS_DB_URL'] + 'signup',
@@ -24,6 +30,7 @@ def input_registration_data(external_id, massage):
 
     if not response['ok']:
         send_message(external_id, "Что-то пошло не так")
+
         register()
     else:
         if login(external_id)['ok']:
@@ -59,7 +66,7 @@ def represent_profile(external_id, massage):
         if response['ok']:
             sold_tickets = response['sold_tickets']
             for ticket in sold_tickets:
-                text += f'{ticket["concert"]} {ticket["type"]} {ticket["count"]}шт\n'
+                text += f'{ticket["concert"]}\t{ticket["type"]} {ticket["count"]}шт\n'
         send_message(external_id, text)
 
         return {"ok": True}
@@ -82,4 +89,5 @@ def register(external_id, massage):
 
 def process_register_dialog(external_id, massage):
     text = massage["text"]
-    dialog.handle_message(external_id, text)
+    ret = dialog.handle_message(external_id, text)
+    return ret

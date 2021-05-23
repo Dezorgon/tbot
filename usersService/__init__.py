@@ -38,5 +38,5 @@ def create_db(app):
     return db
 
 
-app = create_app('test_config.py')
+app = create_app('config.py')
 db = create_db(app)

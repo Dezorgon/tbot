@@ -17,7 +17,7 @@ def create_app(config):
     return app
 
 
-app = create_app('test_config.py')
+app = create_app('config.py')
 token = app.config['TOKEN']
 
 handler = Handler()

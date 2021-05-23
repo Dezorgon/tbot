@@ -18,9 +18,19 @@ def main():
     if 'callback_query' in request.json:
         external_id = request.json["callback_query"]["from"]["id"]
         message = request.json["callback_query"]["message"]
-    else:
+    elif 'message' in request.json:
         external_id = request.json["message"]["from"]["id"]
-        message = request.json["message"]
+        if 'text' in request.json['message']:
+            message = request.json["message"]
+        elif 'photo' in request.json["message"]:
+            external_id = request.json["message"]["from"]["id"]
+            send_message(external_id, 'Давай без каринок', get_start_markup(True))
+            return {'ok': True}
+        else:
+            send_message(external_id, 'Это еще что такое?', get_start_markup(True))
+            return {'ok': True}
+    else:
+        return {'ok': True}
 
     is_handled = updater.update(external_id, message)
 
