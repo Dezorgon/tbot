@@ -6,13 +6,13 @@ from bot.db_handlers.login_handlers import *
 from bot.db_handlers.ticket_handlers import *
 from bot.db_handlers.admin_handlers import *
 
-
 not_handled_answers = ['У меня вообще-то команды есть', 'Что с тобой не так?',
                        'Чел ты', 'Мне кажется тебе не нужны билеты']
 
 
 @app.route('/', methods=["GET", "POST"])
 def main():
+
     app.logger.debug(request.json)
 
     if 'callback_query' in request.json:
@@ -40,9 +40,3 @@ def main():
         send_message(external_id, text, get_start_markup(True))
 
     return {'ok': True}
-
-
-@app.route('/test', methods=["GET", "POST"])
-def test():
-    send_message(435535768, 'test')
-    return "test"

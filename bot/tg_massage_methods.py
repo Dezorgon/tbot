@@ -28,3 +28,10 @@ def delete_message(chat_id, message_id):
     method = "deleteMessage"
     data = {'chat_id': chat_id, 'message_id': message_id}
     response = requests.post(url + method, data=data)
+
+
+def get_updates():
+    method = "getUpdates"
+    data = {"timeout": 300, 'limit': 1}
+    response = requests.post(url + method, data=data)
+    return response
