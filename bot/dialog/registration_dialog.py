@@ -1,5 +1,8 @@
+from datetime import datetime
+
 from bot.markup import get_start_markup
-from bot.telegram_models.tg_models import KeyboardButton, ReplyKeyboardMarkup, InlineKeyboardButton, InlineKeyboardMarkup
+from bot.telegram_models.tg_models import KeyboardButton, ReplyKeyboardMarkup,\
+    InlineKeyboardButton, InlineKeyboardMarkup
 
 
 def register_dialog():
@@ -9,6 +12,20 @@ def register_dialog():
         first_name = yield "Начнем с имени", None, True
         last_name = yield "Фамилия?", None, True
         date = yield "Ну и укажи мне дату своего рождения в формате: день.месяц.год (1.01.2000)", None, True
+        is_valid_date = False
+        while not is_valid_date:
+            try:
+                datetime.strptime(date, "%d.%m.%Y")
+                is_valid_date = True
+            except ValueError:
+                is_valid_date = False
+                b1 = KeyboardButton('Перехотелось')
+                markup = ReplyKeyboardMarkup([[b1]])
+                answer = yield "Введи дату нормально", markup
+                if answer == "Перехотелось":
+                    return "Ну и ладно(", get_start_markup(False)
+                else:
+                    date = answer
 
         b2 = InlineKeyboardButton('Норм', callback_data='accept_register_data')
         b1 = InlineKeyboardButton('Давай по новой Миша', callback_data='re_register')

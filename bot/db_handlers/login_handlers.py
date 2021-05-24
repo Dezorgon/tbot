@@ -14,11 +14,12 @@ def input_registration_data(external_id, massage):
 
     first_name = text[0]
     last_name = text[1]
-    try:
-        date = datetime.strptime('%d.%m.%Y', text[2]).strftime('%d.%m.%Y')
-    except:
-        send_message(external_id, "Напиши дату нормально")
-        return
+    date = text[2]
+    # try:
+    #     date = datetime.strptime('%d.%m.%Y', text[2]).strftime('%d.%m.%Y')
+    # except:
+    #     send_message(external_id, "Напиши дату нормально")
+    #     return
 
     permission = 'user'
 
