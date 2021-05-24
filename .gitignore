@@ -6,3 +6,4 @@ main.py
 */1.py
 *.json
 *.txt
+tests/config.ini
