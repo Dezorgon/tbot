@@ -40,3 +40,10 @@ def main():
         send_message(external_id, text, get_start_markup(True))
 
     return {'ok': True}
+
+
+@app.route('/test', methods=["GET", "POST"])
+def test():
+    send_message(435535768, 'test')
+
+    return {'ok': True}
