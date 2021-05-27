@@ -1,22 +1,71 @@
 import traceback
 from datetime import datetime
 
-from flask import request, jsonify
-from flask_admin import Admin
+from flask import request, jsonify, url_for
 from flask_admin.contrib.sqla import ModelView
 from usersService import app, db
 from usersService.users_models import User, Permission
 import users_db
 
+from flask_admin import Admin
+from flask_admin.contrib import sqla as flask_admin_sqla
+from flask_admin import AdminIndexView
+from flask_admin import expose
+from flask import Flask, flash, redirect, render_template, request, session, abort
 
-admin = Admin(app)
+
+class DefaultModelView(flask_admin_sqla.ModelView):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def is_accessible(self):
+        return session.get('logged_in')
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect("/")
+
+
+class MyAdminIndexView(AdminIndexView):
+    def is_accessible(self):
+        return session.get('logged_in')
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect("/")
+
+    @expose('/')
+    def index(self):
+        if not self.is_accessible():
+            return redirect("/")
+        return super(MyAdminIndexView, self).index()
+
+
+admin = Admin(
+        app,
+        name='My App',
+        template_mode='bootstrap4',
+        index_view=MyAdminIndexView()
+    )
+
 admin.add_view(ModelView(User, db.session))
 admin.add_view(ModelView(Permission, db.session))
 
 
-@app.route("/", methods=["GET", "POST"])
-def index():
-    return jsonify('usersService')
+@app.route('/')
+def home():
+    if not session.get('logged_in'):
+        return render_template('login.html')
+    else:
+        return redirect('/admin')
+
+
+@app.route('/admin_login', methods=['POST'])
+def admin_login():
+    if request.form['password'] == 'admin' and request.form['username'] == 'admin':
+        session['logged_in'] = True
+    else:
+        pass
+        # flash('wrong password!')
+    return redirect('/')
 
 
 @app.route("/signup", methods=["POST"])
@@ -95,4 +144,3 @@ def get_users():
         for i in range(len(response['users'])):
             response['users'][i] = response['users'][i].to_json()
     return jsonify(response)
-
