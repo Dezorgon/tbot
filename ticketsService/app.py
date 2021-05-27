@@ -1,6 +1,5 @@
 import traceback
 from flask import request, jsonify
-from flask_admin import Admin
 from flask_admin.contrib.sqla import ModelView
 from ticketsService import app, db
 from ticketsService import tickets_db
@@ -9,12 +8,67 @@ from ticketsService import sold_tickets_db
 from datetime import datetime
 from ticketsService.tickets_models import Concert, Tickets, Sold, Type
 
+from flask_admin import Admin
+from flask_admin.contrib import sqla as flask_admin_sqla
+from flask_admin import AdminIndexView
+from flask_admin import expose
+from flask import Flask, flash, redirect, render_template, request, session, abort
 
-admin = Admin(app)
+
+class DefaultModelView(flask_admin_sqla.ModelView):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def is_accessible(self):
+        return session.get('logged_in')
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect("/")
+
+
+class MyAdminIndexView(AdminIndexView):
+    def is_accessible(self):
+        return session.get('logged_in')
+
+    def inaccessible_callback(self, name, **kwargs):
+        return redirect("/")
+
+    @expose('/')
+    def index(self):
+        if not self.is_accessible():
+            return redirect("/")
+        return super(MyAdminIndexView, self).index()
+
+
+admin = Admin(
+        app,
+        name='My App',
+        template_mode='bootstrap4',
+        index_view=MyAdminIndexView()
+    )
+
 admin.add_view(ModelView(Concert, db.session))
 admin.add_view(ModelView(Tickets, db.session))
 admin.add_view(ModelView(Sold, db.session))
 admin.add_view(ModelView(Type, db.session))
+
+
+@app.route('/')
+def home():
+    if not session.get('logged_in'):
+        return render_template('login.html')
+    else:
+        return redirect('/admin')
+
+
+@app.route('/admin_login', methods=['POST'])
+def admin_login():
+    if request.form['password'] == 'admin' and request.form['username'] == 'admin':
+        session['logged_in'] = True
+    else:
+        pass
+        # flash('wrong password!')
+    return redirect('/')
 
 
 @app.route("/", methods=["GET", "POST"])
@@ -36,12 +90,6 @@ def create_concert():
     response = concert_db.create_concert(name=name, date=date, city=city, place=place, description=description)
 
     if response['ok']:
-        # concert = response['concert']
-
-        # for t in tickets:
-        #     new_tickets = tickets_db.create_tickets(t['count'], t['price'], concert.id, tickets_type_name=t['type'])
-        #     concert.tickets.append(new_tickets)
-
         response['concert'] = response['concert'].to_json()
         response = dict(**response, **{'message': 'signup'})
 
@@ -95,11 +143,6 @@ def create_tickets(concert_id):
     response = tickets_db.create_tickets(count, price, concert_id, tickets_type_name=tickets_type)
 
     if response['ok']:
-        # tickets = response['tickets']
-        #
-        # new_tickets = tickets_db.create_tickets(tickets['count'], tickets['price'], concert_id, tickets_type_name=t['type'])
-        # # concert.tickets.append(new_tickets)
-
         response['tickets'] = response['tickets'].to_json()
 
     return jsonify(response)
@@ -166,7 +209,3 @@ def buy_ticket(concert_id):
         response = sold_tickets_db.create_sold_tickets(1, concert_id, request.json['user_id'],
                                                        tickets_type_name=request.json['type'])
     return jsonify({'ok': response['ok']})
-#
-#
-# if __name__ == '__main__':
-#     app.run(debug=True, port=80)
