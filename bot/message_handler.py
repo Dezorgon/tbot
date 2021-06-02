@@ -2,12 +2,13 @@ from flask import request
 
 
 class Handler:
-    functions = {'message': [], 'regex': [], 'command': [], "callback": []}
+    functions = {'message': [], 'regex': [], 'command': [], 'callback': []}
     next_functions = {}
     next_function = {}
+    not_handled_func = None
 
     def message_handler(self, message: [str] = None, regex=None, commands: [str] = None,
-                        callback: [str] = None, next_func=None):
+                        callback: [str] = None, not_handled_func: bool = False, next_func=None):
         def decorator(func):
 
             if next_func:
@@ -23,6 +24,8 @@ class Handler:
             if callback:
                 for c in callback:
                     self.functions['callback'].append({c: func})
+            if not_handled_func:
+                self.not_handled_func = func
 
             def wrapper(*args, **kwargs):
                 func(*args, **kwargs)
@@ -60,4 +63,4 @@ class Handler:
                 if func in self.next_functions:
                     self.next_function[external_id] = self.next_functions[func]
                 return func
-        return None
+        return self.not_handled_func
