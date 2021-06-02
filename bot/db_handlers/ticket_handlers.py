@@ -1,5 +1,5 @@
 from flask import request
-import requests
+import requests_async as requests
 
 from bot import ticket_pagination, concert_pagination
 from bot.db_handlers.login_handlers import login, register
@@ -10,10 +10,10 @@ from bot import app, handler
 
 
 @handler.message_handler(callback=['buy_ticket'])
-def buy_ticket(external_id, massage):
+async def buy_ticket(external_id, massage):
     message_id = massage["message_id"]
 
-    user_db_response = login(external_id)
+    user_db_response = await login(external_id)
     if user_db_response['ok']:
         user = user_db_response['user']
         assert user.external_id == external_id
@@ -24,8 +24,8 @@ def buy_ticket(external_id, massage):
             return {"ok": False}
 
         data = {'user_id': external_id, 'type': ticket_pagination.current(external_id).type}
-        response = requests.post(app.config['TICKETS_DB_URL'] + 'concerts/' +
-                                 str(concert_pagination.current(external_id).id) + "/buy", json=data)
+        response = await requests.post(app.config['TICKETS_DB_URL'] + 'concerts/' +
+                                       str(concert_pagination.current(external_id).id) + "/buy", json=data)
         response = response.json()
         app.logger.debug(response)
 
@@ -35,13 +35,13 @@ def buy_ticket(external_id, massage):
             send_message(external_id, 'Ну купил ты билет, а дальше то что?',
                          get_start_markup(True))
     else:
-        register(external_id, massage)
+        await register(external_id, massage)
 
     return {"ok": True}
 
 
 @handler.message_handler(callback=['next_ticket', 'previous_ticket'])
-def represent_ticket_by_concert_id(external_id, massage):
+async def represent_ticket_by_concert_id(external_id, massage):
     message_id = massage["message_id"]
     callback = request.json["callback_query"]["data"]
 
@@ -66,11 +66,11 @@ def send_tickets_representation_message(chat_id, text, tickets, markup=None):
 
 
 @handler.message_handler(callback=['buy'])
-def find_ticket_by_concert_id(external_id, massage):
+async def find_ticket_by_concert_id(external_id, massage):
     concert = concert_pagination.current(external_id)
     response = {"ok": False}
     if concert:
-        response = requests.get(app.config['TICKETS_DB_URL'] + 'concerts/' + str(concert.id) + '/tickets')
+        response = await requests.get(app.config['TICKETS_DB_URL'] + 'concerts/' + str(concert.id) + '/tickets')
         response = response.json()
 
     if not response['ok']:

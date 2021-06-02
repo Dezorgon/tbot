@@ -28,8 +28,8 @@ def input_notification(external_id, massage):
 
 
 @handler.message_handler(commands=['/notify'], next_func=input_notification)
-def notify(external_id, massage):
-    response = login(external_id)
+async def notify(external_id, massage):
+    response = await login(external_id)
     if response['ok'] and response['user'].permission == 'admin':
         massage = send_message(external_id, "Что отправим этим плебеям?")
     else:

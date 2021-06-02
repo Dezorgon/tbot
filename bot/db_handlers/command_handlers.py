@@ -11,21 +11,23 @@ not_handled_answers = ['У меня вообще-то команды есть', 
 
 
 @handler.message_handler(commands=['/start'])
-def process_start_command(external_id, massage):
-    if not login(external_id)['ok']:
-        register(external_id, massage)
+async def process_start_command(external_id, massage):
+    if not (await login(external_id))['ok']:
+        await register(external_id, massage)
     else:
-        process_help_command(external_id, massage)
+        await process_help_command(external_id, massage)
     return {"ok": True}
 
 
 @handler.message_handler(commands=['/help'])
-def process_help_command(external_id, massage):
+async def process_help_command(external_id, massage):
     send_message(external_id, "Привет")
-    send_message(external_id, "Здесь ты можешь купить билеты", get_start_markup(login(external_id)['ok']))
+    send_message(external_id, "Здесь ты можешь купить билеты",
+                 get_start_markup((await login(external_id))['ok']))
     return {"ok": True}
 
 
-def not_handled(external_id, massage):
+@handler.message_handler(not_handled_func=True)
+async def not_handled(external_id, massage):
     text = not_handled_answers[randint(0, len(not_handled_answers) - 1)]
     send_message(external_id, text, get_start_markup(True))

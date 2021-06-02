@@ -34,7 +34,7 @@ class Handler:
 
         return decorator
 
-    def send_message(self, external_id, message):
+    async def send_message(self, external_id, message):
         func_to_invoke = None
         if external_id in self.next_function:
             func_to_invoke = self.next_function[external_id]
@@ -51,8 +51,10 @@ class Handler:
                 func_to_invoke = self.find_function(callback, 'callback', external_id)
 
         if func_to_invoke:
-            response = func_to_invoke(external_id, message)
+            response = await func_to_invoke(external_id, message)
             return {"is_invoked": True, "response": response}
+        else:
+            await self.not_handled_func(external_id, message)
 
         return {"is_invoked": False}
 
@@ -63,4 +65,4 @@ class Handler:
                 if func in self.next_functions:
                     self.next_function[external_id] = self.next_functions[func]
                 return func
-        return self.not_handled_func
+        return None

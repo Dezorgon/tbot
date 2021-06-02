@@ -6,7 +6,8 @@ from bot.db_handlers.login_handlers import *
 from bot.db_handlers.ticket_handlers import *
 from bot.db_handlers.admin_handlers import *
 
-loop = asyncio.get_event_loop()
+loop = asyncio.new_event_loop()
+asyncio.set_event_loop(loop)
 
 
 async def handlers_loop(_request):
@@ -29,7 +30,7 @@ async def handlers_loop(_request):
     else:
         return {'ok': True}
 
-    is_handled = updater.update(external_id, message)
+    is_handled = await updater.update(external_id, message)
 
 
 @app.route('/', methods=["GET", "POST"])

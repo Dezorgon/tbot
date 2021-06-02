@@ -1,5 +1,5 @@
 from flask import request
-import requests
+import requests_async as requests
 
 from bot import concert_pagination
 from bot.markup import concert_markup
@@ -9,7 +9,7 @@ from bot import app, handler
 
 
 @handler.message_handler(callback=['next_concert', 'previous_concert'])
-def represent_concerts(external_id, massage):
+async def represent_concerts(external_id, massage):
     message_id = massage["message_id"]
     callback = request.json["callback_query"]["data"]
 
@@ -23,10 +23,10 @@ def represent_concerts(external_id, massage):
     return {"ok": True}
 
 
-def find_concert_by_city(external_id, massage):
+async def find_concert_by_city(external_id, massage):
     city = massage["text"]
 
-    response = requests.get(app.config['TICKETS_DB_URL'] + 'concerts/' + city)
+    response = await requests.get(app.config['TICKETS_DB_URL'] + 'concerts/' + city)
     response = response.json()
 
     if not response['ok']:
@@ -49,20 +49,21 @@ def send_concerts_representation_message(chat_id, text, concerts, markup=None):
 
 
 @handler.message_handler(message=['Посмотреть концерты в моем городе'], next_func=find_concert_by_city)
-def request_city_to_find_concert(external_id, massage):
+async def request_city_to_find_concert(external_id, massage):
     send_message(external_id, "В каком городе будем искать?")
     return {"ok": True}
 
 
 @handler.message_handler(callback=['see_details'])
-def see_details(external_id, massage):
+async def see_details(external_id, massage):
     send_message(external_id, concert_pagination.current(external_id), concert_markup)
 
 
 @handler.message_handler(message=['Ближайшие концерты'])
-def get_top_concerts(external_id, massage):
-    response = requests.get(app.config['TICKETS_DB_URL'] + 'concerts/top/' + str(10))
+async def get_top_concerts(external_id, massage):
+    response = await requests.get(app.config['TICKETS_DB_URL'] + 'concerts/top/' + str(10))
     response = response.json()
+
     app.logger.debug(response)
 
     if not response['ok']:
