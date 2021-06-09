@@ -6,7 +6,9 @@ volumes:
 
 services:
   bot:
-    image: dezorgon/tbot_bot
+    build:
+      context: .
+      dockerfile: DockerfileBot
     restart: always
     ports:
       - 0.0.0.0:5000:5000
@@ -23,7 +25,9 @@ services:
       - users_db
 
   tickets_db:
-    image: dezorgon/tbot_tickets_db
+    build:
+      context: .
+      dockerfile: DockerfileTickets
     restart: always
     environment:
       FLASK_ENV: development
@@ -42,7 +46,9 @@ services:
        - tickets_db_volume:/var/lib/mysql
 
   users_db:
-    image: dezorgon/tbot_users_db
+    build:
+      context: .
+      dockerfile: DockerfileUsers
     restart: always
     environment:
       FLASK_ENV: development
